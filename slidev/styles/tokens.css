@@ -1,0 +1,43 @@
+/* ============================================================
+   tokens.css — the multi-theme palette.
+
+   Every controlled layout reads ONLY these CSS variables; no layout
+   carries hard-coded colors. A deck picks a palette via the per-slide
+   `class: palette-<name>` the serializer emits, so switching `theme`
+   in the DeckSpec reskins every block with zero markup changes.
+   ============================================================ */
+
+.palette-mind,
+.palette-arctic {
+  --s-radius: 14px;
+  --s-font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --s-font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+/* Mind — cinematic HUD: near-black canvas, cyan signal. */
+.palette-mind {
+  --s-bg: #08090b;
+  --s-bg-2: #0b0d12;
+  --s-panel: #11141b;
+  --s-ink: #f4f6f8;
+  --s-muted: #8b95a5;
+  --s-line: #1e2733;
+  --s-accent: #22d3ee;
+  --s-accent-bright: #67e8f9;
+  --s-accent-ink: #062a30;
+  --s-glow: rgba(34, 211, 238, 0.22);
+}
+
+/* Arctic — cool slate with an ice-blue signal; proves the reskin. */
+.palette-arctic {
+  --s-bg: #0c1322;
+  --s-bg-2: #0f1a2e;
+  --s-panel: #15203a;
+  --s-ink: #eef3fb;
+  --s-muted: #93a3c0;
+  --s-line: #233354;
+  --s-accent: #60a5fa;
+  --s-accent-bright: #93c5fd;
+  --s-accent-ink: #0a1f44;
+  --s-glow: rgba(96, 165, 250, 0.22);
+}

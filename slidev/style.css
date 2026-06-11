@@ -1,0 +1,14 @@
+/* Slidev auto-injects this global stylesheet. Pull in the palette tokens
+   and shared base chrome that every controlled layout depends on. */
+@import "./styles/tokens.css";
+@import "./styles/base.css";
+
+/* Slidev's "go to slide" overlay (the `g` shortcut, internals/Goto.vue) leaves
+   its autocomplete list rendered while CLOSED: the list is `v-if`'d on
+   `fuse.search(text).length`, and this Fuse.js version returns ALL items for an
+   empty query. The closed dialog is parked at top:-80px, so that full slide
+   list spills down the right edge of every slide. The dialog's input is
+   `:disabled` exactly when the dialog is closed — hide the stray list then. */
+#slidev-goto-dialog:has(#slidev-goto-input:disabled) .autocomplete-list {
+  display: none;
+}

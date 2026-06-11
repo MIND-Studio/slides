@@ -1,0 +1,214 @@
+/* ============================================================
+   base.css — shared chrome for every controlled layout.
+
+   Sets the canvas, typography, and a few reusable primitives
+   (kicker eyebrow, corner brackets, panel) that the layouts
+   compose. All values come from tokens.css.
+   ============================================================ */
+
+/* Paint the canvas. The palette class sits on the slide wrapper; the
+   layout root (.slidev-layout) is inside it, so the vars resolve. */
+.slidev-layout {
+  background-color: var(--s-bg);
+  background-image:
+    radial-gradient(ellipse 80% 60% at 50% -5%, var(--s-glow) 0, transparent 55%),
+    radial-gradient(130% 125% at 50% 42%, transparent 56%, rgba(0, 0, 0, 0.5) 100%),
+    linear-gradient(180deg, var(--s-bg-2), var(--s-bg));
+  color: var(--s-ink);
+  font-family: var(--s-font-sans);
+  overflow: hidden;
+}
+
+.s-root {
+  position: relative;
+  z-index: 2; /* above the ambient aurora + grid layers */
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 3.2rem 4rem;
+  box-sizing: border-box;
+}
+
+.s-kicker {
+  font-family: var(--s-font-mono);
+  font-size: 0.74rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--s-accent-bright);
+  margin-bottom: 1.1rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6em;
+}
+.s-kicker::before {
+  content: "";
+  width: 0.5em;
+  height: 0.5em;
+  border-radius: 50%;
+  background: var(--s-accent);
+  box-shadow: 0 0 0.7em var(--s-accent);
+  animation: s-pulse 2.4s ease-in-out infinite;
+}
+@keyframes s-pulse {
+  0%, 100% { box-shadow: 0 0 0.5em var(--s-accent); opacity: 0.8; }
+  50% { box-shadow: 0 0 1.2em var(--s-accent); opacity: 1; }
+}
+
+.s-title {
+  font-size: 2.7rem;
+  font-weight: 650;
+  line-height: 1.08;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+.s-sub {
+  color: var(--s-muted);
+  font-size: 1.2rem;
+  line-height: 1.5;
+  margin-top: 0.9rem;
+  max-width: 44ch;
+}
+
+.s-muted { color: var(--s-muted); }
+.s-accent { color: var(--s-accent-bright); }
+
+.s-panel {
+  background: var(--s-panel);
+  border: 1px solid var(--s-line);
+  border-radius: var(--s-radius);
+  padding: 1.6rem 1.8rem;
+}
+
+/* Cinematic corner brackets for cover / section. */
+.s-bracket {
+  position: absolute;
+  z-index: 2;
+  width: 38px;
+  height: 38px;
+  border: 1.5px solid var(--s-accent);
+  opacity: 0.55;
+  pointer-events: none;
+  box-shadow: 0 0 1.4em -0.4em var(--s-accent);
+  animation: s-bracket-in 0.7s ease-out both;
+}
+@keyframes s-bracket-in {
+  from { opacity: 0; transform: scale(0.7); }
+  to { opacity: 0.55; transform: scale(1); }
+}
+.s-bracket.tl { top: 28px; left: 28px; border-right: 0; border-bottom: 0; }
+.s-bracket.br { bottom: 28px; right: 28px; border-left: 0; border-top: 0; }
+
+/* Markdown content (the `content` block's bullets). */
+.slidev-layout ul {
+  list-style: none;
+  padding: 0;
+  margin: 1.4rem 0 0;
+}
+.slidev-layout li {
+  position: relative;
+  padding-left: 1.5rem;
+  margin: 0.7rem 0;
+  font-size: 1.2rem;
+  line-height: 1.45;
+  color: var(--s-ink);
+}
+.slidev-layout li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.62em;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 2px;
+  background: var(--s-accent);
+}
+
+/* Entrance — a calm, deck-wide fade-up. Honors reduced-motion. */
+@keyframes s-rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.s-rise > * { animation: s-rise 0.5s cubic-bezier(0.4, 0, 0.2, 1) both; }
+.s-rise > *:nth-child(2) { animation-delay: 0.08s; }
+.s-rise > *:nth-child(3) { animation-delay: 0.16s; }
+.s-rise > *:nth-child(4) { animation-delay: 0.24s; }
+
+/* Bullets cascade in one by one rather than as a single block. The list
+   container itself stops animating so its items own the entrance. */
+.s-rise ul { animation: none; }
+.s-rise li { animation: s-rise 0.55s cubic-bezier(0.4, 0, 0.2, 1) both; }
+.s-rise li:nth-child(1) { animation-delay: 0.22s; }
+.s-rise li:nth-child(2) { animation-delay: 0.30s; }
+.s-rise li:nth-child(3) { animation-delay: 0.38s; }
+.s-rise li:nth-child(4) { animation-delay: 0.46s; }
+.s-rise li:nth-child(5) { animation-delay: 0.54s; }
+.s-rise li:nth-child(6) { animation-delay: 0.62s; }
+
+/* ============================================================
+   Cinematic flourishes — ambient depth + motion. GPU-friendly
+   (opacity/transform/filter only); both palettes inherit via tokens;
+   all disabled under prefers-reduced-motion. No per-slide CSS.
+   ============================================================ */
+
+/* Ambient aurora: two accent blooms drifting slowly behind everything. */
+.slidev-layout::before {
+  content: "";
+  position: absolute;
+  inset: -25%;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(38% 48% at 22% 20%, var(--s-glow) 0, transparent 60%),
+    radial-gradient(34% 44% at 80% 78%, var(--s-glow) 0, transparent 62%);
+  filter: blur(6px);
+  opacity: 0.75;
+  animation: s-aurora 24s ease-in-out infinite alternate;
+}
+@keyframes s-aurora {
+  0%   { transform: translate3d(-2%, -1%, 0) scale(1); opacity: 0.55; }
+  50%  { transform: translate3d(3%, 2%, 0) scale(1.08); opacity: 0.85; }
+  100% { transform: translate3d(1%, -2%, 0) scale(1.03); opacity: 0.6; }
+}
+
+/* Faint HUD grid, masked to a ceiling band so it never fights body text. */
+.slidev-layout::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(var(--s-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--s-line) 1px, transparent 1px);
+  background-size: 48px 48px, 48px 48px;
+  opacity: 0.28;
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, transparent 62%);
+  mask-image: linear-gradient(180deg, #000 0%, transparent 62%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .s-rise > *,
+  .s-rise li,
+  .s-bracket,
+  .s-kicker::before,
+  .slidev-layout::before { animation: none; }
+}
+
+/* Click-to-select affordance — ONLY when embedded in the studio iframe
+   (setup/main.ts adds `s-embedded` to the root). Standalone presentations
+   are untouched. */
+.s-embedded [data-s-field] { cursor: pointer; }
+.s-embedded [data-s-field]:hover {
+  outline: 1px dashed var(--s-accent);
+  outline-offset: 5px;
+  border-radius: 4px;
+}
+/* The studio's active selection — persistent (until cleared), solid where the
+   hover affordance is dashed. */
+.s-embedded [data-s-field].s-field-selected {
+  outline: 2px solid var(--s-accent);
+  outline-offset: 5px;
+  border-radius: 4px;
+}

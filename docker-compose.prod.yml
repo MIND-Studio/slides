@@ -1,0 +1,49 @@
+# Production stack: the Next studio + the Slidev sidecar, sharing the active
+# deck through the `slides` volume. (The dev-only local CSS pod stays in
+# docker-compose.yml — production points at https://pods.mindpods.org/.)
+#
+#   NODE_AUTH_TOKEN=<github packages token> docker compose -f docker-compose.prod.yml up --build
+services:
+  web:
+    build:
+      context: .
+      target: web
+      args:
+        NODE_AUTH_TOKEN: ${NODE_AUTH_TOKEN}
+        # Override for non-localhost deployments (baked into the client bundle):
+        # NEXT_PUBLIC_SLIDEV_URL: https://slides-render.example.org
+    ports:
+      - "3100:3100"
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+      - OPENROUTER_MODEL=${OPENROUTER_MODEL:-}
+      - GENERATION_PROVIDER=${GENERATION_PROVIDER:-}
+    volumes:
+      - slides:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3100/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  slidev:
+    build:
+      context: .
+      target: slidev
+      args:
+        NODE_AUTH_TOKEN: ${NODE_AUTH_TOKEN}
+    ports:
+      - "3101:3101"
+    volumes:
+      - slides:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3101/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  slides:
