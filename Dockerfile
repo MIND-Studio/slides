@@ -33,7 +33,7 @@ ENV NEXT_PUBLIC_SLIDEV_URL=$NEXT_PUBLIC_SLIDEV_URL \
     NEXT_PUBLIC_POD_BASE_URL=$NEXT_PUBLIC_POD_BASE_URL \
     NEXT_PUBLIC_SOLID_ISSUER=$NEXT_PUBLIC_SOLID_ISSUER \
     NEXT_TELEMETRY_DISABLED=1
-COPY tsconfig.json next.config.ts postcss.config.mjs next-env.d.ts ./
+COPY tsconfig.json next.config.ts postcss.config.mjs ./
 COPY public ./public
 COPY src ./src
 RUN npm run build
