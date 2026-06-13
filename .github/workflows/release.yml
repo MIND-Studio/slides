@@ -1,8 +1,10 @@
-# Build BOTH slides images on every `v*` tag (or manual run) and push to GHCR:
+# Build ALL slides images on every `v*` tag (or manual run) and push to GHCR:
 #   slides-web    — the Next.js studio (:3100)
 #   slides-slidev — the Slidev render sidecar (:3101)
-# (Same dual-image pattern as whiteboard's app+relay.) The infra repo pins both
-# @sha256 digests in k8s/argocd/children/appset-apps.yaml.
+#   slides-worker — the stateless slidev export/build worker (:3162) backing
+#                   Export PDF / Publish site (internal-only behind /api/render)
+# (Same multi-image pattern as whiteboard's app+relay.) The infra repo pins each
+# @sha256 digest in k8s/argocd/children/appset-apps.yaml.
 #
 #   git tag v0.1.0 && git push --tags    (or: gh workflow run release.yml)
 
@@ -37,6 +39,8 @@ jobs:
             image: slides-web
           - target: slidev
             image: slides-slidev
+          - target: worker
+            image: slides-worker
     steps:
       - uses: actions/checkout@v4
         with:
