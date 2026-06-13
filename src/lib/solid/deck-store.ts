@@ -7,8 +7,7 @@ import {
   deleteContainer,
   deleteFile,
 } from "@inrupt/solid-client";
-import { session } from "./session";
-import { isBrokered, brokerFetch } from "./broker";
+import { fetcher } from "./fetcher";
 import { decksContainerFor, deckId } from "@/lib/config";
 import { deckSchema, type DeckSpec } from "@/lib/spec/schema";
 import { serializeDeck } from "@/lib/spec/serialize";
@@ -28,13 +27,6 @@ export interface DeckMeta {
   theme: string;
   slideCount: number;
   updatedAt: string;
-}
-
-function fetcher() {
-  // Inside the Mind shell (brokered mode) this is the shell's scope-checked
-  // broker fetch — Slides talks to the pod through the shell's authed fetch with
-  // no credential of its own. Standalone it's the local OIDC session's fetch.
-  return isBrokered() ? brokerFetch : session().fetch;
 }
 
 async function putText(url: string, body: string, type: string): Promise<void> {
@@ -129,4 +121,15 @@ export async function removeDeck(podRoot: string, id: string): Promise<void> {
   } catch {
     /* already gone */
   }
+}
+
+/** Store the exported PDF alongside the deck at `decks/<id>/deck.pdf`. */
+export async function savePdf(
+  podRoot: string,
+  id: string,
+  pdf: Blob
+): Promise<string> {
+  const url = `${decksContainerFor(podRoot)}${id}/deck.pdf`;
+  await overwriteFile(url, pdf, { contentType: "application/pdf", fetch: fetcher() });
+  return url;
 }

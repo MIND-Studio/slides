@@ -19,9 +19,13 @@ services:
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
       - OPENROUTER_MODEL=${OPENROUTER_MODEL:-}
       - GENERATION_PROVIDER=${GENERATION_PROVIDER:-}
+      # The /api/render proxy forwards export/build to the worker (internal only).
+      - RENDER_WORKER_URL=http://worker:3162
     volumes:
       - slides:/data
     restart: unless-stopped
+    depends_on:
+      - worker
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:3100/"]
       interval: 30s
@@ -41,6 +45,23 @@ services:
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:3101/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # Stateless build/export worker. Not published to the host — only the web
+  # app reaches it (RENDER_WORKER_URL). Chromium needs more than the default
+  # 64MB /dev/shm or it crashes mid-render.
+  worker:
+    build:
+      context: .
+      target: worker
+      args:
+        NODE_AUTH_TOKEN: ${NODE_AUTH_TOKEN}
+    shm_size: "1gb"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3162/healthz"]
       interval: 30s
       timeout: 5s
       retries: 3

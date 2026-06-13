@@ -4,10 +4,14 @@
   "private": true,
   "scripts": {
     "dev": "next dev -p 3160",
+    "predev": "npm run build:widget",
     "build": "next build",
+    "prebuild": "npm run build:widget",
+    "build:widget": "vite build -c widget/vite.config.ts",
     "start": "next start -p 3160",
     "slidev": "slidev slidev/slides.md --port 3161",
     "slidev:export": "slidev export slidev/slides.md",
+    "worker": "node worker/server.mjs",
     "seed:demo": "tsx scripts/seed-demo.ts",
     "seed:gallery": "tsx scripts/build-active.ts",
     "typecheck": "tsc --noEmit",
@@ -33,9 +37,12 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitejs/plugin-vue": "^5.2.1",
+    "playwright-chromium": "^1.60.0",
     "tailwindcss": "^4",
     "tsx": "^4.22.3",
     "typescript": "^5",
+    "vite": "^6.0.0",
     "vue": "^3.5.0"
   }
 }

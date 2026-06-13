@@ -9,7 +9,7 @@ import type { EditTarget } from "@/lib/spec/target";
 import ChatPanel, { type DeckInfo } from "@/components/ChatPanel";
 import DeckList from "@/components/DeckList";
 import SlideInspector from "@/components/SlideInspector";
-import SlidevPreview, { SLIDEV_URL } from "@/components/SlidevPreview";
+import DeckCanvas from "@/components/DeckCanvas";
 
 /** localStorage key for the active deck — client-side only (pod invariant). */
 const DECK_STORAGE_KEY = "mind-slides:active-deck";
@@ -20,7 +20,6 @@ export default function StudioPage() {
   // pod. Re-saving overwrites that deck; a fresh generation clears it so the
   // next save creates a new one.
   const [deckPodId, setDeckPodId] = useState<string | null>(null);
-  const [reloadKey, setReloadKey] = useState(0);
   const [busy, setBusy] = useState(false);
   const [podRoot, setPodRoot] = useState<string | null>(null);
   // The active selection — one or MORE targets ("slide 3, the headline";
@@ -108,38 +107,20 @@ export default function StudioPage() {
       .catch(() => {});
   }, []);
 
-  // Click-to-select from inside the Slidev iframe: the sidecar's setup hook
-  // posts { type, slide, field } on every click when embedded.
-  useEffect(() => {
-    const slidevOrigin = new URL(SLIDEV_URL).origin;
-    function onMessage(e: MessageEvent) {
-      if (e.origin !== slidevOrigin) return;
-      const data = e.data as {
-        type?: string;
-        slide?: number;
-        field?: string | null;
-        meta?: boolean;
-      };
-      if (typeof data?.slide !== "number") return;
-      if (data.type === "mind-slides:slide") {
-        setPreviewSlide(data.slide);
-      } else if (data.type === "mind-slides:select") {
-        // ⌘/Ctrl-click on a slide element toggles that ELEMENT in the
-        // multi-selection; a plain click replaces the selection.
-        if (data.meta) {
-          togglePreviewTarget({ slide: data.slide, field: data.field ?? undefined });
-        } else {
-          setTargets([{ slide: data.slide, field: data.field ?? undefined }]);
-        }
-      }
+  // Click-to-select from the in-app deck canvas: a plain DOM click reports
+  // { slide, field, meta }. ⌘/Ctrl-click toggles that ELEMENT in the
+  // multi-selection; a plain click replaces the selection.
+  function onCanvasSelect(p: { slide: number; field: string | null; meta: boolean }) {
+    if (typeof p.slide !== "number") return;
+    if (p.meta) {
+      togglePreviewTarget({ slide: p.slide, field: p.field ?? undefined });
+    } else {
+      setTargets([{ slide: p.slide, field: p.field ?? undefined }]);
     }
-    window.addEventListener("message", onMessage);
-    return () => window.removeEventListener("message", onMessage);
-  }, []);
+  }
 
-  // Generation and "load example" already wrote the active Markdown server-side
-  // (HMR will repaint), but we also bump the iframe key to force a clean reload
-  // for brand-new files.
+  // Generation and "load example" hand back a fresh deck; the canvas re-renders
+  // from this client state (no sidecar, no shared file).
   function onDeck(next: DeckSpec, info: DeckInfo) {
     setDeck(next);
     if (!info.refined) {
@@ -148,44 +129,23 @@ export default function StudioPage() {
     } else {
       setTargets((prev) => prev.filter((t) => t.slide <= next.slides.length));
     }
-    setReloadKey((k) => k + 1);
   }
 
-  // A direct edit from the inspector — already schema-validated; render it and
-  // make it the active deck. Keeps the pod id: editing a saved deck means the
-  // next save overwrites it.
+  // A direct edit from the inspector — already schema-validated; make it the
+  // active deck (the canvas re-renders from this state, no server round-trip).
+  // Keeps the pod id: editing a saved deck means the next save overwrites it.
+  // Async to match the inspector/deck-list prop signatures, though rendering is
+  // now synchronous client state — no awaited server round-trip remains.
   async function applyEdit(next: DeckSpec) {
-    setBusy(true);
-    try {
-      await fetch("/api/render", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ deck: next }),
-      });
-      setDeck(next);
-      setTargets((prev) => prev.filter((t) => t.slide <= next.slides.length));
-      setReloadKey((k) => k + 1);
-    } finally {
-      setBusy(false);
-    }
+    setDeck(next);
+    setTargets((prev) => prev.filter((t) => t.slide <= next.slides.length));
   }
 
-  // A pod deck is only fetched, not yet active — render it before showing.
+  // A pod deck is only fetched, not yet active — make it the active deck.
   async function onPodLoad(next: DeckSpec, id: string) {
-    setBusy(true);
-    try {
-      await fetch("/api/render", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ deck: next }),
-      });
-      setDeck(next);
-      setDeckPodId(id);
-      setTargets([]);
-      setReloadKey((k) => k + 1);
-    } finally {
-      setBusy(false);
-    }
+    setDeck(next);
+    setDeckPodId(id);
+    setTargets([]);
   }
 
   return (
@@ -271,11 +231,12 @@ export default function StudioPage() {
       {/* Definite height when stacked — the preview's inner h-full/absolute
           chain needs a resolvable base, which min-height alone doesn't give. */}
       <section className="sticky top-0 z-20 order-1 h-[38vh] min-h-[240px] shrink-0 border-b lg:static lg:order-2 lg:h-auto lg:min-h-0 lg:flex-1 lg:border-b-0">
-        <SlidevPreview
-          reloadKey={reloadKey}
-          deckTitle={deck?.title ?? null}
+        <DeckCanvas
+          deck={deck}
+          onSlideChange={setPreviewSlide}
           selection={active}
           targets={targets}
+          onSelect={onCanvasSelect}
         />
       </section>
     </div>
