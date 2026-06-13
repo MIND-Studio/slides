@@ -6,6 +6,8 @@ export const POD_BASE_URL =
   process.env.NEXT_PUBLIC_POD_BASE_URL ?? "http://localhost:3102/";
 
 export const DECKS_PATH = "mind-slides/decks/";
+/** Published static sites (one `slidev build` per deck) live here. */
+export const SITES_PATH = "mind-slides/sites/";
 
 /** `http://host/alice/profile/card#me` → `http://host/alice/`. */
 export function podRootFromWebId(webId: string): string {
@@ -23,6 +25,20 @@ export function podRootFromWebId(webId: string): string {
 
 export function decksContainerFor(podRoot: string): string {
   return (podRoot.endsWith("/") ? podRoot : podRoot + "/") + DECKS_PATH;
+}
+
+/** The pod container a deck's published site lives in. */
+export function sitesContainerFor(podRoot: string): string {
+  return (podRoot.endsWith("/") ? podRoot : podRoot + "/") + SITES_PATH;
+}
+
+/**
+ * The `--base` for `slidev build`: the URL PATH (no origin) where the site is
+ * served from, with leading + trailing slash, e.g. `/alice/mind-slides/sites/<id>/`.
+ * Vite emits asset URLs against this, so it MUST match where the files land.
+ */
+export function siteBaseForId(podRoot: string, id: string): string {
+  return new URL(`${sitesContainerFor(podRoot)}${id}/`).pathname;
 }
 
 /** A url-safe id from a title plus a short disambiguator. */

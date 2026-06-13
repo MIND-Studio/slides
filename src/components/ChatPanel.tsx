@@ -140,28 +140,14 @@ export default function ChatPanel({
     }
   }
 
-  /** Re-render the deck through the same pipeline (theme switch, examples). */
-  async function render(deck: DeckSpec, info: DeckInfo) {
+  /** Make a deck active (theme switch, examples). The canvas renders it from
+   *  client state — no server round-trip. */
+  function render(deck: DeckSpec, info: DeckInfo) {
     if (busy) return;
-    setBusy(true);
     setError(null);
     setNote(null);
     setChangedSlides([]);
-    try {
-      const res = await fetch("/api/render", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ deck }),
-      });
-      if (!res.ok) {
-        const json = await res.json().catch(() => ({}));
-        setError(json.error ?? `Render failed (${res.status})`);
-        return;
-      }
-      onDeck(deck, info);
-    } finally {
-      setBusy(false);
-    }
+    onDeck(deck, info);
   }
 
   function pickTheme(t: ThemeName) {

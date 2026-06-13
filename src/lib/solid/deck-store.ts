@@ -7,8 +7,7 @@ import {
   deleteContainer,
   deleteFile,
 } from "@inrupt/solid-client";
-import { session } from "./session";
-import { isBrokered, brokerFetch } from "./broker";
+import { fetcher } from "./fetcher";
 import { decksContainerFor, deckId } from "@/lib/config";
 import { deckSchema, type DeckSpec } from "@/lib/spec/schema";
 import { serializeDeck } from "@/lib/spec/serialize";
@@ -28,13 +27,6 @@ export interface DeckMeta {
   theme: string;
   slideCount: number;
   updatedAt: string;
-}
-
-function fetcher() {
-  // Inside the Mind shell (brokered mode) this is the shell's scope-checked
-  // broker fetch — Slides talks to the pod through the shell's authed fetch with
-  // no credential of its own. Standalone it's the local OIDC session's fetch.
-  return isBrokered() ? brokerFetch : session().fetch;
 }
 
 async function putText(url: string, body: string, type: string): Promise<void> {
@@ -114,19 +106,38 @@ export async function loadDeck(
 }
 
 export async function removeDeck(podRoot: string, id: string): Promise<void> {
+  // LDP has no recursive delete: enumerate the container's children and remove
+  // each, then the container. Enumerating (rather than a hardcoded name list)
+  // also catches deck.pdf and anything added later — a leftover child makes the
+  // deleteContainer fail with 409 and orphans the deck folder. Recurses on
+  // sub-containers (deck folders are flat today, but stay robust if that changes).
   const base = `${decksContainerFor(podRoot)}${id}/`;
   const f = fetcher();
-  // LDP has no recursive delete: remove children, then the container.
-  for (const name of ["deck.json", "slides.md", "meta.json"]) {
+
+  async function purge(container: string): Promise<void> {
+    let children: string[] = [];
     try {
-      await deleteFile(`${base}${name}`, { fetch: f });
+      children = getContainedResourceUrlAll(await getSolidDataset(container, { fetch: f }));
     } catch {
-      /* already gone */
+      return; // doesn't exist
     }
+    for (const child of children) {
+      if (child.endsWith("/")) await purge(child);
+      else await deleteFile(child, { fetch: f }).catch(() => {});
+    }
+    await deleteContainer(container, { fetch: f }).catch(() => {});
   }
-  try {
-    await deleteContainer(base, { fetch: f });
-  } catch {
-    /* already gone */
-  }
+
+  await purge(base);
+}
+
+/** Store the exported PDF alongside the deck at `decks/<id>/deck.pdf`. */
+export async function savePdf(
+  podRoot: string,
+  id: string,
+  pdf: Blob
+): Promise<string> {
+  const url = `${decksContainerFor(podRoot)}${id}/deck.pdf`;
+  await overwriteFile(url, pdf, { contentType: "application/pdf", fetch: fetcher() });
+  return url;
 }

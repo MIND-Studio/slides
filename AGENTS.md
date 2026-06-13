@@ -9,8 +9,10 @@ presentation by filling a **controlled set of slide blocks** — never by writin
 CSS/JS/layout. The pipeline is:
 
 ```
-brief → /api/generate → DeckSpec (Zod-validated) → serializeDeck() → slides.md
-      → Slidev sidecar (:3101) → iframe in the studio (:3100)
+brief → /api/generate → DeckSpec (Zod-validated) → studio client state
+      → DeckCanvas → deck widget (Vue, in-process) → rendered in the studio
+                                                      (no sidecar, per-browser)
+DeckSpec → serializeDeck() → slides.md + slidev/ project → portable Slidev deck
 ```
 
 It is a **sibling** of the other prototypes — independent app, own ports, own
@@ -37,17 +39,65 @@ If you want a new visual capability, add a **block** (schema + serializer pass-
 through is automatic + a layout), not an escape hatch. Never let free-form HTML
 or styles reach the renderer.
 
-## Rendering = a sidecar, not in-process
+## Rendering = a Vue widget, in-process (multi-user safe)
 
-Slidev is a Vite/Vue app; it **cannot** embed in Next. `npm run slidev` runs it
-as a separate process on :3101 serving the single file `slidev/slides.md`.
-"Make a deck active" = overwrite that file (`src/lib/slidev/workspace.ts`,
-path overridable via `SLIDES_PATH` for containers); Slidev HMR repaints the
-studio iframe. In the Docker stack (`docker-compose.prod.yml`) the two
-containers share the file through a volume — same mechanism, containerized.
-**v0 limitation:** one active deck at a time, single local user. Concurrent
-multi-deck rendering and `slidev build` snapshots-to-pod are explicit later
-work — do not add a central renderer.
+The studio renders the active deck **in the browser**, not via a Slidev sidecar.
+`widget/` is a tiny Vue app — `DeckRenderer.vue` + the **same** ten
+`slidev/layouts/*.vue` — built by `widget/vite.config.ts` (`@vitejs/plugin-vue`)
+into a single self-contained bundle `public/deck-widget/deck-widget.{js,css}`
+that attaches `window.MindDeck`. `src/components/DeckCanvas.tsx` loads that
+static asset and calls `MindDeck.mount(el, { deck, ... })`; the layouts read
+`$frontmatter.data.*` exactly as under Slidev (we expose a reactive
+`$frontmatter` as a Vue app global, see `widget/main.ts`), so the files stay
+byte-for-byte valid Slidev layouts. The widget is rebuilt by the `predev` /
+`prebuild` npm hooks — run `npm run build:widget` after editing anything under
+`widget/` or `slidev/layouts/`.
+
+Because each browser renders its own deck from client state, there is **no
+shared `slides.md` and no shared process** — concurrent users no longer clobber
+each other (the old sidecar's core limitation). `/api/generate` returns a spec
+and writes nothing server-side. Click-to-select is a plain DOM event in the
+widget — no cross-origin postMessage.
+
+`serializeDeck()` still produces `slides.md`, and the `slidev/` folder is still
+a real Slidev project — that is the **portability path**: a deck (`slides.md` +
+the `slidev/` project) runs/`build`s/`export`s under stock Slidev outside Mind.
+The `npm run slidev` sidecar (:3161) is now **optional** — only for opening a
+deck in the full Slidev app. Do not reintroduce a central per-request renderer.
+
+## Export & publish — the stateless build worker
+
+Real `slidev export` (PDF, via Chromium) and `slidev build` (static SPA) **can't
+run in the browser** — they need Node + Chromium. `worker/server.mjs` is a tiny,
+**stateless, credential-free** HTTP service that runs them:
+
+- `POST /export {slidesMd}` → PDF bytes; `POST /build {slidesMd, base}` → a JSON
+  manifest `{files:[{path, base64, contentType}]}`; `GET /healthz`.
+- Every request gets its **own temp project dir** under `.work/` (a copy of the
+  committed `slidev/` project + the posted `slides.md`) — the shared
+  `slidev/slides.md` is never written, so it's multi-user safe like the preview.
+  It `rm -rf`s the dir after each request and holds **no pod credentials**.
+- The browser calls it through the same-origin `src/app/api/render/route.ts`
+  proxy (forwards to `RENDER_WORKER_URL`, default `http://localhost:3162`); the
+  worker stays on the internal network. `src/lib/publish/render-client.ts` wraps
+  the two calls.
+
+**The browser uploads the artifacts to the pod**, preserving the
+browser-talks-to-pod invariant: `savePdf` (`deck-store.ts`) writes
+`decks/<id>/deck.pdf`; `publishSite` (`src/lib/solid/site-store.ts`) uploads the
+SPA to `<pod>/mind-slides/sites/<id>/` with per-file content-types, and — when
+the user picks **public** — `src/lib/solid/acl.ts` writes a WAC `.acl` granting
+`foaf:Agent` read on the container **and** its contents (both needed, else the
+assets 403). `slidev build --base` is the pod URL **path** (`siteBaseForId`) so
+assets resolve; one build per deck avoids slidevjs/slidev#2368.
+
+This is the one place a deck transits a Mind server — transiently, with no
+credentials and nothing persisted (same class as the brief already going to
+Anthropic during generation). Run the worker with `npm run worker`.
+
+**Note on the pod link:** Community Solid Server returns an RDF listing on a
+container GET, so the shareable URL is `.../sites/<id>/index.html`, not the bare
+container.
 
 ## Generation
 
@@ -96,17 +146,22 @@ default, OIDC via `@inrupt/solid-client-authn-*`; the single-flight
 | Service           | Port |
 |-------------------|------|
 | Next.js dev       | 3160 |
-| Slidev sidecar    | 3161 |
+| Build/export worker | 3162 |
+| Slidev sidecar (optional) | 3161 |
 | Shared pod (mind-node) | 3011 |
 
-Run `npm run slidev` and `npm run dev` in two terminals.
+`npm run dev` is enough for authoring (it builds the deck widget first via
+`predev`). To use **Export PDF / Publish site**, also run `npm run worker`
+(:3162) — the studio's `/api/render` proxy forwards to it. The `npm run slidev`
+sidecar is optional — only to view a deck in the full Slidev app.
 
 ## Checks before handing off
 
 ```bash
-npm run typecheck   # tsc --noEmit
+npm run build:widget # rebuild the in-app deck renderer (widget/ → public/deck-widget)
+npm run typecheck   # tsc --noEmit (the widget is typechecked by its own tsconfig)
 npm test            # scripts/smoke.ts — spec pipeline invariants (no key, no pod needed)
-npm run build       # Next production build (standalone)
+npm run build       # Next production build (standalone; prebuild runs build:widget)
 ```
 
 ## Never commit

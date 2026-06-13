@@ -9,9 +9,8 @@ import {
   openRouterModel,
   OpenRouterError,
 } from "@/lib/generate/openrouter";
-import { setActiveDeck } from "@/lib/slidev/workspace";
 
-// The Anthropic SDK + filesystem write need the Node runtime, not Edge.
+// The Anthropic SDK needs the Node runtime, not Edge.
 export const runtime = "nodejs";
 
 /** Hard input cap — a brief/instruction is a paragraph, not a document. */
@@ -56,8 +55,8 @@ function pickProvider(): Provider | { error: string } | null {
  * OpenRouter): the model is constrained to our DeckSchema via structured
  * outputs, so it can only return a conforming spec. Without a key: a
  * deterministic local composer/reviser produces a valid spec, so the full
- * loop works offline. Either way the result is re-validated and made the
- * active deck (writes the Slidev workspace).
+ * loop works offline. Either way the result is re-validated before return; the
+ * client renders it in-process (no server-side render state).
  */
 export async function POST(req: NextRequest) {
   let body: {
@@ -156,7 +155,6 @@ export async function POST(req: NextRequest) {
   // another. Revisions keep whatever the model returned (the instruction may
   // legitimately switch themes).
   const deck = currentDeck ? result.deck : { ...result.deck, theme };
-  await setActiveDeck(deck);
 
   return NextResponse.json({ deck, source, model });
 }
