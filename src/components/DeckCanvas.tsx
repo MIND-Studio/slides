@@ -131,7 +131,12 @@ export default function DeckCanvas({
     };
   }, []);
 
-  // Mount the widget once it's loaded and we have a host + deck.
+  // Mount the widget once it's loaded and a deck first becomes available.
+  // We depend on the PRESENCE of a deck, not the deck object itself: a new deck
+  // object on every edit would otherwise tear down and recreate the whole Vue
+  // app each revision (flicker, lost focus). Subsequent deck changes flow
+  // through the update() effect below.
+  const deckPresent = deck !== null;
   useEffect(() => {
     if (!ready || !hostRef.current || !deck || ctrlRef.current) return;
     ctrlRef.current = window.MindDeck!.mount(hostRef.current, {
@@ -146,7 +151,7 @@ export default function DeckCanvas({
       ctrlRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ready, deck]);
+  }, [ready, deckPresent]);
 
   // Clamp the visible slide to the deck and report it up.
   useEffect(() => {

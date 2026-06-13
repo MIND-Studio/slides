@@ -186,6 +186,10 @@ export default function DeckList({
     setError(null);
     try {
       await removeDeck(podRoot, meta.id);
+      // Also tear down any published site — otherwise its (possibly public)
+      // URL keeps serving the deck the user just deleted. Best-effort.
+      await unpublishSite(podRoot, meta.id).catch(() => {});
+      if (meta.id === currentDeckId) setPublished(null);
       onDeleted(meta.id);
       await refresh();
     } catch (e) {

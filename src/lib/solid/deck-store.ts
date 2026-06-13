@@ -106,21 +106,29 @@ export async function loadDeck(
 }
 
 export async function removeDeck(podRoot: string, id: string): Promise<void> {
+  // LDP has no recursive delete: enumerate the container's children and remove
+  // each, then the container. Enumerating (rather than a hardcoded name list)
+  // also catches deck.pdf and anything added later — a leftover child makes the
+  // deleteContainer fail with 409 and orphans the deck folder. Recurses on
+  // sub-containers (deck folders are flat today, but stay robust if that changes).
   const base = `${decksContainerFor(podRoot)}${id}/`;
   const f = fetcher();
-  // LDP has no recursive delete: remove children, then the container.
-  for (const name of ["deck.json", "slides.md", "meta.json"]) {
+
+  async function purge(container: string): Promise<void> {
+    let children: string[] = [];
     try {
-      await deleteFile(`${base}${name}`, { fetch: f });
+      children = getContainedResourceUrlAll(await getSolidDataset(container, { fetch: f }));
     } catch {
-      /* already gone */
+      return; // doesn't exist
     }
+    for (const child of children) {
+      if (child.endsWith("/")) await purge(child);
+      else await deleteFile(child, { fetch: f }).catch(() => {});
+    }
+    await deleteContainer(container, { fetch: f }).catch(() => {});
   }
-  try {
-    await deleteContainer(base, { fetch: f });
-  } catch {
-    /* already gone */
-  }
+
+  await purge(base);
 }
 
 /** Store the exported PDF alongside the deck at `decks/<id>/deck.pdf`. */
