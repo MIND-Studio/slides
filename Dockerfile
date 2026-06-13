@@ -33,11 +33,9 @@ FROM deps AS build
 WORKDIR /app
 # NEXT_PUBLIC_* values are inlined into the client bundle AT BUILD TIME —
 # override these args when the deployment doesn't run on localhost.
-ARG NEXT_PUBLIC_SLIDEV_URL=http://localhost:3101
 ARG NEXT_PUBLIC_POD_BASE_URL=https://pods.mindpods.org/
 ARG NEXT_PUBLIC_SOLID_ISSUER
-ENV NEXT_PUBLIC_SLIDEV_URL=$NEXT_PUBLIC_SLIDEV_URL \
-    NEXT_PUBLIC_POD_BASE_URL=$NEXT_PUBLIC_POD_BASE_URL \
+ENV NEXT_PUBLIC_POD_BASE_URL=$NEXT_PUBLIC_POD_BASE_URL \
     NEXT_PUBLIC_SOLID_ISSUER=$NEXT_PUBLIC_SOLID_ISSUER \
     NEXT_TELEMETRY_DISABLED=1
 COPY tsconfig.json next.config.ts postcss.config.mjs ./
@@ -52,9 +50,8 @@ RUN npm run build
 # ---- web: the Next standalone server ---------------------------------------
 FROM node:22-alpine AS web
 WORKDIR /app
-ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 HOSTNAME=0.0.0.0 PORT=3100 \
-    SLIDES_PATH=/data/slides.md
-RUN addgroup -S app && adduser -S app -G app && mkdir -p /data && chown app:app /data
+ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 HOSTNAME=0.0.0.0 PORT=3100
+RUN addgroup -S app && adduser -S app -G app
 COPY --from=build --chown=app:app /app/.next/standalone ./
 COPY --from=build --chown=app:app /app/.next/static ./.next/static
 COPY --from=build --chown=app:app /app/public ./public
