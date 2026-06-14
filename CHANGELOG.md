@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/MIND-Studio/slides/compare/v0.2.0...v0.2.1) (2026-06-14)
+
+
+### Bug Fixes
+
+* a11y and UX polish for chat status, markdown view, slide remove ([#3](https://github.com/MIND-Studio/slides/issues/3)) ([5ae4916](https://github.com/MIND-Studio/slides/commit/5ae4916f43572a73a473d21b3efad527b6442841))
+
 ## [0.2.0](https://github.com/MIND-Studio/slides/compare/v0.1.0...v0.2.0) (2026-06-13)
 
 
