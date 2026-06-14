@@ -309,7 +309,7 @@ export default function DeckCanvas({
         {showMarkdown && (
           <pre
             data-testid="markdown-view"
-            className="absolute inset-0 z-10 overflow-auto bg-card p-4 font-mono text-xs leading-relaxed text-foreground"
+            className="absolute inset-0 z-10 overflow-auto whitespace-pre-wrap break-words bg-card p-4 font-mono text-xs leading-relaxed text-foreground"
           >
             {deck
               ? serializeDeck(deck)

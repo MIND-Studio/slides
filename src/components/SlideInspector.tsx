@@ -382,7 +382,7 @@ function SlideEditor({
           variant="ghost"
           onClick={removeSlide}
           disabled={busy || deck.slides.length <= 1}
-          title="Remove this slide"
+          title={deck.slides.length <= 1 ? "A deck needs at least one slide" : "Remove this slide"}
           data-testid="remove-slide"
           className="ml-auto text-destructive hover:text-destructive"
         >
