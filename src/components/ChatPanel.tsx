@@ -288,6 +288,7 @@ export default function ChatPanel({
       )}
       {error && (
         <p
+          role="alert"
           data-testid="chat-error"
           className="rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive"
         >
@@ -296,6 +297,8 @@ export default function ChatPanel({
       )}
       {note && (
         <div
+          role="status"
+          aria-live="polite"
           data-testid="chat-note"
           className="rounded-md border bg-muted/40 px-3 py-2 text-xs text-muted-foreground"
         >
