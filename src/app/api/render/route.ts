@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 
 /**
  * Same-origin proxy to the stateless build/export worker.
@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
       `build worker unreachable at ${WORKER_URL} — is it running? (${
         e instanceof Error ? e.message : String(e)
       })`,
-      { status: 502 }
+      { status: 502 },
     );
   }
 
@@ -56,8 +56,7 @@ export async function POST(req: NextRequest) {
   return new Response(upstream.body, {
     status: upstream.status,
     headers: {
-      "content-type":
-        upstream.headers.get("content-type") ?? "application/octet-stream",
+      "content-type": upstream.headers.get("content-type") ?? "application/octet-stream",
     },
   });
 }

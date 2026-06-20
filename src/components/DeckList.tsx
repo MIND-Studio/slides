@@ -1,31 +1,31 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
 import { Button } from "@mind-studio/ui";
 import {
+  Check,
+  ExternalLink,
+  FileDown,
+  FolderOpen,
+  Globe,
+  Loader2,
+  Lock,
   Save,
   Trash2,
-  FolderOpen,
-  Loader2,
-  Check,
-  FileDown,
-  Globe,
-  Lock,
-  ExternalLink,
 } from "lucide-react";
-import type { DeckSpec } from "@/lib/spec/schema";
-import { serializeDeck } from "@/lib/spec/serialize";
+import { useCallback, useEffect, useState } from "react";
+import { siteBaseForId } from "@/lib/config";
+import { buildSite, exportPdf } from "@/lib/publish/render-client";
 import {
+  type DeckMeta,
   listDecks,
-  saveDeck,
   loadDeck,
   removeDeck,
+  saveDeck,
   savePdf,
-  type DeckMeta,
 } from "@/lib/solid/deck-store";
 import { publishSite, unpublishSite } from "@/lib/solid/site-store";
-import { exportPdf, buildSite } from "@/lib/publish/render-client";
-import { siteBaseForId } from "@/lib/config";
+import type { DeckSpec } from "@/lib/spec/schema";
+import { serializeDeck } from "@/lib/spec/serialize";
 
 interface Props {
   podRoot: string;
@@ -57,9 +57,7 @@ export default function DeckList({
   const [makePublic, setMakePublic] = useState(true);
   const [progress, setProgress] = useState<string | null>(null);
   const [pdfSaved, setPdfSaved] = useState(false);
-  const [published, setPublished] = useState<{ indexUrl: string; isPublic: boolean } | null>(
-    null
-  );
+  const [published, setPublished] = useState<{ indexUrl: string; isPublic: boolean } | null>(null);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -87,7 +85,7 @@ export default function DeckList({
         podRoot,
         currentDeck,
         new Date().toISOString(),
-        currentDeckId ?? undefined
+        currentDeckId ?? undefined,
       );
       onSaved(meta.id);
       setJustSaved(true);

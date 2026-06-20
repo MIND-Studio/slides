@@ -55,7 +55,12 @@ export const galleryDeck: DeckSpec = {
       },
       right: {
         heading: "Controlled blocks",
-        points: ["Consistent by design", "Always renders", "Reskins from tokens", "Schema-validated"],
+        points: [
+          "Consistent by design",
+          "Always renders",
+          "Reskins from tokens",
+          "Schema-validated",
+        ],
       },
     },
     {
@@ -118,8 +123,14 @@ export const launchDeck: DeckSpec = {
     {
       block: "comparison",
       title: "The shift",
-      left: { heading: "Today's apps", points: ["Your data on their servers", "Sold to advertisers", "Locked in"] },
-      right: { heading: "Aurora", points: ["Your data in your pod", "Never sold", "Portable by design"] },
+      left: {
+        heading: "Today's apps",
+        points: ["Your data on their servers", "Sold to advertisers", "Locked in"],
+      },
+      right: {
+        heading: "Aurora",
+        points: ["Your data in your pod", "Never sold", "Portable by design"],
+      },
     },
     {
       block: "hero",
@@ -139,8 +150,18 @@ export const reviewDeck: DeckSpec = {
   title: "Q2 in review",
   theme: "arctic",
   slides: [
-    { block: "title", kicker: "Internal · Q2", title: "Where we landed.", subtitle: "Three numbers and what's next." },
-    { block: "bigNumber", value: "3.2x", label: "growth in active pods", caption: "Quarter over quarter." },
+    {
+      block: "title",
+      kicker: "Internal · Q2",
+      title: "Where we landed.",
+      subtitle: "Three numbers and what's next.",
+    },
+    {
+      block: "bigNumber",
+      value: "3.2x",
+      label: "growth in active pods",
+      caption: "Quarter over quarter.",
+    },
     { block: "bigNumber", value: "98%", label: "of sync runs under 200ms" },
     {
       block: "timeline",
@@ -228,7 +249,8 @@ export const solidServerRsDeck: DeckSpec = {
       block: "bigNumber",
       value: "154×",
       label: "the throughput of CSS",
-      caption: "Identical OIDC discovery endpoint · 91,980 vs 597 req/s · Apple M3 Pro, release build",
+      caption:
+        "Identical OIDC discovery endpoint · 91,980 vs 597 req/s · Apple M3 Pro, release build",
     },
     {
       block: "content",

@@ -2,8 +2,7 @@
  * Pod URL helpers. Mind Slides claims one namespace in the pod —
  * `<pod>/mind-slides/decks/` — and never touches anything outside it.
  */
-export const POD_BASE_URL =
-  process.env.NEXT_PUBLIC_POD_BASE_URL ?? "http://localhost:3102/";
+export const POD_BASE_URL = process.env.NEXT_PUBLIC_POD_BASE_URL ?? "http://localhost:3102/";
 
 export const DECKS_PATH = "mind-slides/decks/";
 /** Published static sites (one `slidev build` per deck) live here. */

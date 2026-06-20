@@ -1,8 +1,6 @@
-import { deckSchema, type DeckSpec } from "./schema";
+import { type DeckSpec, deckSchema } from "./schema";
 
-export type ValidateResult =
-  | { ok: true; deck: DeckSpec }
-  | { ok: false; error: string };
+export type ValidateResult = { ok: true; deck: DeckSpec } | { ok: false; error: string };
 
 /**
  * Parse unknown JSON into a DeckSpec with a human-readable error suitable for

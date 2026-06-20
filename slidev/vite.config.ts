@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite'
+import { defineConfig } from "vite";
 
 // Slidev loads this from the deck's userRoot (this `slidev/` dir). Vite 6 rejects
 // requests whose Host header isn't allow-listed (DNS-rebinding protection). The
@@ -7,6 +7,6 @@ import { defineConfig } from 'vite'
 // dot allows the whole mindpods.org fleet; localhost keeps `npm run slidev` working.
 export default defineConfig({
   server: {
-    allowedHosts: ['.mindpods.org', 'localhost'],
+    allowedHosts: [".mindpods.org", "localhost"],
   },
-})
+});

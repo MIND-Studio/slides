@@ -50,7 +50,7 @@ export const REVISE_PROMPT = `The user already has a deck (its full spec follows
 export function revisionContent(
   deck: DeckSpec,
   instruction: string,
-  target: EditTarget | EditTarget[] | null
+  target: EditTarget | EditTarget[] | null,
 ): string {
   const targets = target ? (Array.isArray(target) ? target : [target]) : [];
   const scope =

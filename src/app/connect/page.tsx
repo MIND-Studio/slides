@@ -7,8 +7,7 @@ const ISSUER =
   process.env.NEXT_PUBLIC_SOLID_ISSUER ??
   process.env.NEXT_PUBLIC_POD_BASE_URL ??
   "https://pods.mindpods.org/";
-const IS_LOCAL_ISSUER =
-  ISSUER.includes("localhost") || ISSUER.includes("127.0.0.1");
+const IS_LOCAL_ISSUER = ISSUER.includes("localhost") || ISSUER.includes("127.0.0.1");
 
 export default function ConnectPage() {
   return (
@@ -16,14 +15,12 @@ export default function ConnectPage() {
       <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
         Optional — connect a pod
       </p>
-      <h1 className="mt-4 text-4xl font-semibold tracking-tight">
-        Sign in to save your decks.
-      </h1>
+      <h1 className="mt-4 text-4xl font-semibold tracking-tight">Sign in to save your decks.</h1>
       <p className="mt-4 text-muted-foreground">
-        Generating decks works without signing in. Connect your Solid identity
-        and your decks are written to <code>your-pod/mind-slides/decks/</code> —
-        on your pod, never our servers. Pick the issuer that hosts your pod; we
-        redirect you there for the OIDC dance and come back once you&apos;re in.
+        Generating decks works without signing in. Connect your Solid identity and your decks are
+        written to <code>your-pod/mind-slides/decks/</code> — on your pod, never our servers. Pick
+        the issuer that hosts your pod; we redirect you there for the OIDC dance and come back once
+        you&apos;re in.
       </p>
       <div className="mt-8">
         <ConnectForm />
@@ -34,8 +31,7 @@ export default function ConnectPage() {
             Dev shortcut
           </p>
           <p className="mt-2">
-            This prototype&apos;s local CSS (on :3102) ships two pre-seeded
-            accounts:
+            This prototype&apos;s local CSS (on :3102) ships two pre-seeded accounts:
           </p>
           <ul className="mt-2 space-y-1 font-mono text-xs">
             <li>alice@mind-slides.local · dev-only-do-not-use-in-prod</li>

@@ -1,16 +1,16 @@
 "use client";
 
 import {
-  overwriteFile,
-  getSolidDataset,
-  getContainedResourceUrlAll,
-  deleteFile,
   deleteContainer,
+  deleteFile,
+  getContainedResourceUrlAll,
+  getSolidDataset,
+  overwriteFile,
 } from "@inrupt/solid-client";
-import { fetcher } from "./fetcher";
-import { makeContainerPublic, makeContainerPrivate } from "./acl";
 import { sitesContainerFor } from "@/lib/config";
 import type { SiteFile } from "@/lib/publish/render-client";
+import { makeContainerPrivate, makeContainerPublic } from "./acl";
+import { fetcher } from "./fetcher";
 
 /**
  * Publishes a `slidev build` static site into the pod and (optionally) makes it
@@ -36,7 +36,7 @@ export async function publishSite(
   podRoot: string,
   id: string,
   files: SiteFile[],
-  opts: { public: boolean }
+  opts: { public: boolean },
 ): Promise<PublishResult> {
   const base = `${sitesContainerFor(podRoot)}${id}/`;
   const f = fetcher();
@@ -48,11 +48,15 @@ export async function publishSite(
   // served with text/plain JS won't execute. Parallel, like listDecks().
   await Promise.all(
     files.map((file) =>
-      overwriteFile(`${base}${file.path}`, new Blob([b64ToBuffer(file.base64)], { type: file.contentType }), {
-        contentType: file.contentType,
-        fetch: f,
-      })
-    )
+      overwriteFile(
+        `${base}${file.path}`,
+        new Blob([b64ToBuffer(file.base64)], { type: file.contentType }),
+        {
+          contentType: file.contentType,
+          fetch: f,
+        },
+      ),
+    ),
   );
 
   if (opts.public) await makeContainerPublic(base);
