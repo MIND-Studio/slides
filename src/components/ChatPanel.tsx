@@ -14,6 +14,7 @@ import {
 import { THEMES, type ThemeName, type DeckSpec } from "@/lib/spec/schema";
 import { exampleDecks } from "@/lib/spec/examples";
 import type { EditTarget } from "@/lib/spec/target";
+import { ledgerHeaders, getUserKey, setUserKey, inferProviderFromKey } from "@/lib/ledger/byok";
 
 export interface DeckInfo {
   source: "model" | "local" | "example";
@@ -60,8 +61,31 @@ export default function ChatPanel({
   // Which slides the last refine actually touched — rendered as clickable
   // chips so the answer connects back to the deck.
   const [changedSlides, setChangedSlides] = useState<number[]>([]);
+  // Free-allotment / BYOK: shown when the allotment is spent (402), or opened
+  // manually to manage the user's own key.
+  const [needsKey, setNeedsKey] = useState(false);
+  const [keyInput, setKeyInput] = useState("");
+  const [hasKey, setHasKey] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const composerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setHasKey(Boolean(getUserKey()));
+  }, []);
+
+  function saveKey() {
+    const trimmed = keyInput.trim();
+    setUserKey(trimmed || null, trimmed ? inferProviderFromKey(trimmed) : null);
+    setHasKey(Boolean(trimmed));
+    setKeyInput("");
+    if (trimmed) {
+      setNeedsKey(false);
+      setError(null);
+      setNote("Key saved — generation will use your own key.");
+    } else {
+      setNote("Key removed.");
+    }
+  }
 
   const refining = Boolean(currentDeck) && refine;
   const activeTheme = currentDeck ? currentDeck.theme : theme;
@@ -99,7 +123,7 @@ export default function ChatPanel({
     try {
       const res = await fetch("/api/generate", {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: { "content-type": "application/json", ...ledgerHeaders() },
         body: JSON.stringify(
           refining
             ? { brief: trimmed, currentDeck, ...(targets.length > 0 ? { targets } : {}) }
@@ -108,6 +132,10 @@ export default function ChatPanel({
       });
       const json = await res.json();
       if (!res.ok) {
+        // Out of free allotment — prompt for the user's own key inline.
+        if (res.status === 402 && json.code === "out_of_free_usage") {
+          setNeedsKey(true);
+        }
         setError(json.error ?? `Generation failed (${res.status})`);
         return;
       }
@@ -128,10 +156,12 @@ export default function ChatPanel({
               ? `Removed ${removed} slide${removed === 1 ? "" : "s"}`
               : "Revised — no slide content changed"
         : "Generated";
+      const balanceNote =
+        typeof json.balance === "number" ? ` ${json.balance} free MIND left.` : "";
       setNote(
         json.source === "local"
           ? `${what} offline (no generation key set) — composed deterministically.`
-          : `${what} with ${json.model ?? "the model"}.`
+          : `${what} with ${json.model ?? "the model"}.${balanceNote}`
       );
     } catch (e) {
       setError(String(e));
@@ -318,6 +348,44 @@ export default function ChatPanel({
               ))}
             </span>
           )}
+        </div>
+      )}
+      {(needsKey || hasKey) && (
+        <div
+          data-testid="byok-panel"
+          className="flex flex-col gap-2 rounded-md border bg-muted/30 px-3 py-2.5 text-xs"
+        >
+          <p className="text-muted-foreground">
+            {hasKey
+              ? "Using your own API key. Generations no longer use your free allotment."
+              : "Add your own Anthropic or OpenRouter API key to keep generating. It stays in this browser and is sent straight to the provider."}
+          </p>
+          <div className="flex items-center gap-2">
+            <input
+              type="password"
+              value={keyInput}
+              onChange={(e) => setKeyInput(e.target.value)}
+              placeholder={hasKey ? "Replace key (sk-ant-… / sk-or-…)" : "sk-ant-… or sk-or-…"}
+              data-testid="byok-input"
+              className="min-w-0 flex-1 rounded border bg-background px-2 py-1 font-mono text-xs"
+            />
+            <Button size="sm" variant="outline" onClick={saveKey} data-testid="byok-save">
+              Save
+            </Button>
+            {hasKey && (
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => {
+                  setKeyInput("");
+                  saveKey();
+                }}
+                data-testid="byok-clear"
+              >
+                Remove
+              </Button>
+            )}
+          </div>
         </div>
       )}
 

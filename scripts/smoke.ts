@@ -11,6 +11,7 @@ import { composeDeck, reviseDeck } from "../src/lib/spec/compose";
 import { exampleDecks, galleryDeck } from "../src/lib/spec/examples";
 import { podRootFromWebId, decksContainerFor, deckId } from "../src/lib/config";
 import { sanitizeTarget, sanitizeTargets } from "../src/lib/spec/target";
+import { chooseGenerationPath, inferProvider } from "../src/lib/ledger/policy";
 
 let passed = 0;
 function test(name: string, fn: () => void) {
@@ -251,6 +252,91 @@ test("podRootFromWebId strips the profile document", () => {
 test("deckId slugs are url-safe and salted", () => {
   assert.equal(deckId("Hello, World! — deck", "123456"), "hello-world-deck-123456");
   assert.equal(deckId("???", "42"), "deck-42");
+});
+
+process.stdout.write("free-allotment policy\n");
+const byok = { provider: "openrouter" as const, apiKey: "or-key" };
+
+test("BYOK wins outright and is never metered", () => {
+  const c = chooseGenerationPath({
+    ledgerEnabled: true,
+    webid: "https://pods/u#me",
+    byok,
+    companyProvider: "anthropic",
+    balance: 0,
+  });
+  assert.deepEqual(c, { kind: "byok", provider: "openrouter", apiKey: "or-key" });
+});
+
+test("no company key → offline composer", () => {
+  const c = chooseGenerationPath({
+    ledgerEnabled: false,
+    webid: null,
+    byok: null,
+    companyProvider: null,
+    balance: null,
+  });
+  assert.deepEqual(c, { kind: "offline" });
+});
+
+test("ledger off → company key, unmetered (today's behavior)", () => {
+  const c = chooseGenerationPath({
+    ledgerEnabled: false,
+    webid: "https://pods/u#me",
+    byok: null,
+    companyProvider: "anthropic",
+    balance: null,
+  });
+  assert.deepEqual(c, { kind: "company", meter: false });
+});
+
+test("ledger on but anonymous → offline (don't spend company funds)", () => {
+  const c = chooseGenerationPath({
+    ledgerEnabled: true,
+    webid: null,
+    byok: null,
+    companyProvider: "anthropic",
+    balance: null,
+  });
+  assert.deepEqual(c, { kind: "offline" });
+});
+
+test("ledger on, known user, spent → out_of_free", () => {
+  const c = chooseGenerationPath({
+    ledgerEnabled: true,
+    webid: "https://pods/u#me",
+    byok: null,
+    companyProvider: "anthropic",
+    balance: 0,
+  });
+  assert.deepEqual(c, { kind: "out_of_free", balance: 0 });
+});
+
+test("ledger on, known user, has balance → company key, metered", () => {
+  const c = chooseGenerationPath({
+    ledgerEnabled: true,
+    webid: "https://pods/u#me",
+    byok: null,
+    companyProvider: "openrouter",
+    balance: 42,
+  });
+  assert.deepEqual(c, { kind: "company", meter: true });
+});
+
+test("ledger reachable-unknown balance fails open → metered company key", () => {
+  const c = chooseGenerationPath({
+    ledgerEnabled: true,
+    webid: "https://pods/u#me",
+    byok: null,
+    companyProvider: "anthropic",
+    balance: null,
+  });
+  assert.deepEqual(c, { kind: "company", meter: true });
+});
+
+test("inferProvider distinguishes Anthropic from OpenRouter keys", () => {
+  assert.equal(inferProvider("sk-ant-abc"), "anthropic");
+  assert.equal(inferProvider("sk-or-v1-abc"), "openrouter");
 });
 
 process.stdout.write(
