@@ -1,11 +1,11 @@
-import type { Metadata } from "next";
-import Link from "next/link";
-import { Fraunces, Hanken_Grotesk, JetBrains_Mono } from "next/font/google";
-import { ThemeProvider, Button } from "@mind-studio/ui";
+import { Button, ThemeProvider } from "@mind-studio/ui";
 import { mind } from "@mind-studio/ui/themes";
+import type { Metadata } from "next";
+import { Fraunces, Hanken_Grotesk, JetBrains_Mono } from "next/font/google";
+import Link from "next/link";
 import "./globals.css";
-import ThemeToggle from "@/components/ThemeToggle";
 import { StandaloneOnly } from "@/components/StandaloneOnly";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const display = Fraunces({
   subsets: ["latin"],
@@ -29,9 +29,7 @@ export const metadata: Metadata = {
     "Describe a deck, watch it render. An agent fills a fixed set of slide blocks; a serializer turns the validated spec into a Slidev presentation. No hand-written CSS — and your decks live in your pod.",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{ children: React.ReactNode }>) {
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html
       lang="en"

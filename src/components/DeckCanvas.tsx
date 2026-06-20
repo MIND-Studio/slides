@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import { Button } from "@mind-studio/ui";
 import {
   ChevronLeft,
@@ -11,9 +10,10 @@ import {
   Loader2,
   MonitorPlay,
 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { exportPdf } from "@/lib/publish/render-client";
 import type { DeckSpec } from "@/lib/spec/schema";
 import { serializeDeck } from "@/lib/spec/serialize";
-import { exportPdf } from "@/lib/publish/render-client";
 import type { EditTarget } from "@/lib/spec/target";
 
 /**
@@ -52,7 +52,7 @@ declare global {
           embedded?: boolean;
           targets?: { slide: number; field?: string | null }[];
           onSelect?: (p: SelectPayload) => void;
-        }
+        },
       ): DeckController;
     };
   }
@@ -208,10 +208,7 @@ export default function DeckCanvas({
 
   function downloadMarkdown() {
     if (!deck) return;
-    downloadBlob(
-      new Blob([serializeDeck(deck)], { type: "text/markdown" }),
-      `${slugify()}.md`
-    );
+    downloadBlob(new Blob([serializeDeck(deck)], { type: "text/markdown" }), `${slugify()}.md`);
   }
 
   // Real Slidev PDF (Chromium, via the worker) — not browser print.
@@ -311,9 +308,7 @@ export default function DeckCanvas({
             data-testid="markdown-view"
             className="absolute inset-0 z-10 overflow-auto whitespace-pre-wrap break-words bg-card p-4 font-mono text-xs leading-relaxed text-foreground"
           >
-            {deck
-              ? serializeDeck(deck)
-              : "No active deck yet — generate one or load an example."}
+            {deck ? serializeDeck(deck) : "No active deck yet — generate one or load an example."}
           </pre>
         )}
         {failed ? (

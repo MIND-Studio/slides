@@ -57,15 +57,15 @@ export default function setup(ctx?: {
         {
           type: "mind-slides:select",
           slide,
-          field: el instanceof HTMLElement ? el.dataset.sField ?? null : null,
+          field: el instanceof HTMLElement ? (el.dataset.sField ?? null) : null,
           meta: e.metaKey || e.ctrlKey,
         },
         // The payload is just a slide number + field name — nothing sensitive
         // — and the studio validates the *source* origin on receipt.
-        "*"
+        "*",
       );
     },
-    { capture: true }
+    { capture: true },
   );
 
   // ---- studio → iframe: follow the shared selection -------------------------
@@ -87,8 +87,7 @@ export default function setup(ctx?: {
    *  the route transition mounts it. */
   function highlight(field: string, tries = 12) {
     const els = Array.from(document.querySelectorAll(`[data-s-field="${field}"]`));
-    const target =
-      els.find((el) => (el as HTMLElement).offsetParent !== null) ?? els[0];
+    const target = els.find((el) => (el as HTMLElement).offsetParent !== null) ?? els[0];
     if (!target) {
       if (tries > 0) {
         highlightTimers.push(window.setTimeout(() => highlight(field, tries - 1), 120));

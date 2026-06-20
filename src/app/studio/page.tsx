@@ -1,15 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ensureSession } from "@/lib/solid/auth";
-import { currentIdentity, isBrokered, signalReady } from "@/lib/solid/broker";
-import { deckSchema, type DeckSpec } from "@/lib/spec/schema";
-import type { EditTarget } from "@/lib/spec/target";
+import { useEffect, useState } from "react";
 import ChatPanel, { type DeckInfo } from "@/components/ChatPanel";
+import DeckCanvas from "@/components/DeckCanvas";
 import DeckList from "@/components/DeckList";
 import SlideInspector from "@/components/SlideInspector";
-import DeckCanvas from "@/components/DeckCanvas";
+import { ensureSession } from "@/lib/solid/auth";
+import { currentIdentity, isBrokered, signalReady } from "@/lib/solid/broker";
+import { type DeckSpec, deckSchema } from "@/lib/spec/schema";
+import type { EditTarget } from "@/lib/spec/target";
 
 /** localStorage key for the active deck — client-side only (pod invariant). */
 const DECK_STORAGE_KEY = "mind-slides:active-deck";
@@ -36,7 +36,7 @@ export default function StudioPage() {
     setTargets((prev) =>
       prev.some((x) => x.slide === t.slide)
         ? prev.filter((x) => x.slide !== t.slide)
-        : [...prev, { slide: t.slide }]
+        : [...prev, { slide: t.slide }],
     );
   // ⌘-click in the PREVIEW toggles by ELEMENT (slide + field), so several
   // elements — even on the same slide — accumulate one by one. A field pick
@@ -174,7 +174,9 @@ export default function StudioPage() {
             setBusy={setBusy}
             targets={targets}
             onRemoveTarget={(t) =>
-              setTargets((prev) => prev.filter((x) => !(x.slide === t.slide && x.field === t.field)))
+              setTargets((prev) =>
+                prev.filter((x) => !(x.slide === t.slide && x.field === t.field)),
+              )
             }
             onSelectTarget={selectOne}
             focusKey={chatFocusKey}
@@ -188,9 +190,7 @@ export default function StudioPage() {
               previewSlide={previewSlide}
               onSelect={(t) => (t ? selectOne(t) : setTargets([]))}
               onToggle={toggleTarget}
-              onField={(t) =>
-                setTargets((prev) => [...prev.filter((x) => x.slide !== t.slide), t])
-              }
+              onField={(t) => setTargets((prev) => [...prev.filter((x) => x.slide !== t.slide), t])}
               onApply={applyEdit}
               onAskAi={(t) => {
                 selectOne(t);

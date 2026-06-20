@@ -1,20 +1,20 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import { Button } from "@mind-studio/ui";
 import {
-  Sparkles,
-  Loader2,
-  LayoutTemplate,
-  PenLine,
-  Crosshair,
-  X,
   ChevronRight,
+  Crosshair,
+  LayoutTemplate,
+  Loader2,
+  PenLine,
+  Sparkles,
+  X,
 } from "lucide-react";
-import { THEMES, type ThemeName, type DeckSpec } from "@/lib/spec/schema";
+import { useEffect, useRef, useState } from "react";
+import { getUserKey, inferProviderFromKey, ledgerHeaders, setUserKey } from "@/lib/ledger/byok";
 import { exampleDecks } from "@/lib/spec/examples";
+import { type DeckSpec, THEMES, type ThemeName } from "@/lib/spec/schema";
 import type { EditTarget } from "@/lib/spec/target";
-import { ledgerHeaders, getUserKey, setUserKey, inferProviderFromKey } from "@/lib/ledger/byok";
 
 export interface DeckInfo {
   source: "model" | "local" | "example";
@@ -127,7 +127,7 @@ export default function ChatPanel({
         body: JSON.stringify(
           refining
             ? { brief: trimmed, currentDeck, ...(targets.length > 0 ? { targets } : {}) }
-            : { brief: trimmed, theme }
+            : { brief: trimmed, theme },
         ),
       });
       const json = await res.json();
@@ -141,8 +141,7 @@ export default function ChatPanel({
       }
       const next = json.deck as DeckSpec;
       const changed = refining && currentDeck ? diffSlides(currentDeck, next) : [];
-      const removed =
-        refining && currentDeck ? currentDeck.slides.length - next.slides.length : 0;
+      const removed = refining && currentDeck ? currentDeck.slides.length - next.slides.length : 0;
       onDeck(next, { source: json.source, refined: refining });
       setBrief("");
       // Chips only when the change is scoped — "everything changed" needs no map.
@@ -161,7 +160,7 @@ export default function ChatPanel({
       setNote(
         json.source === "local"
           ? `${what} offline (no generation key set) — composed deterministically.`
-          : `${what} with ${json.model ?? "the model"}.${balanceNote}`
+          : `${what} with ${json.model ?? "the model"}.${balanceNote}`,
       );
     } catch (e) {
       setError(String(e));
@@ -296,11 +295,7 @@ export default function ChatPanel({
           ))}
         </div>
         <Button onClick={generate} disabled={busy || !brief.trim()} data-testid="generate-btn">
-          {busy ? (
-            <Loader2 className="size-4 animate-spin" />
-          ) : (
-            <Sparkles className="size-4" />
-          )}
+          {busy ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
           {refining ? "Refine" : "Generate"}
         </Button>
       </div>
@@ -313,7 +308,9 @@ export default function ChatPanel({
           className="flex animate-pulse items-center gap-2 rounded-md border bg-muted/40 px-3 py-2 text-xs text-muted-foreground"
         >
           <Loader2 className="size-3.5 shrink-0 animate-spin" />
-          {refining ? "Revising the deck — usually a few seconds…" : "Composing your deck — usually a few seconds…"}
+          {refining
+            ? "Revising the deck — usually a few seconds…"
+            : "Composing your deck — usually a few seconds…"}
         </p>
       )}
       {error && (
@@ -398,27 +395,27 @@ export default function ChatPanel({
             <ChevronRight className="size-3.5 transition-transform group-open:rotate-90" />
             <LayoutTemplate className="size-3.5" /> Or load an example
           </summary>
-          <ExampleList busy={busy} onPick={(d) => render(d, { source: "example", refined: false })} />
+          <ExampleList
+            busy={busy}
+            onPick={(d) => render(d, { source: "example", refined: false })}
+          />
         </details>
       ) : (
         <div className="mt-auto">
           <p className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
             <LayoutTemplate className="size-3.5" /> Or load an example
           </p>
-          <ExampleList busy={busy} onPick={(d) => render(d, { source: "example", refined: false })} />
+          <ExampleList
+            busy={busy}
+            onPick={(d) => render(d, { source: "example", refined: false })}
+          />
         </div>
       )}
     </div>
   );
 }
 
-function ExampleList({
-  busy,
-  onPick,
-}: {
-  busy: boolean;
-  onPick: (deck: DeckSpec) => void;
-}) {
+function ExampleList({ busy, onPick }: { busy: boolean; onPick: (deck: DeckSpec) => void }) {
   return (
     <div className="mt-2 flex flex-col gap-1.5">
       {exampleDecks.map((deck, i) => (

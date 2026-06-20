@@ -1,16 +1,21 @@
-import { NextRequest, NextResponse } from "next/server";
-import { THEMES, type ThemeName, type DeckSpec, deckSchema } from "@/lib/spec/schema";
-import { validateDeck } from "@/lib/spec/validate";
-import { composeDeck, reviseDeck } from "@/lib/spec/compose";
-import { SYSTEM_PROMPT, REVISE_PROMPT, revisionContent } from "@/lib/spec/prompt";
-import { sanitizeTargets, type EditTarget } from "@/lib/spec/target";
+import { type NextRequest, NextResponse } from "next/server";
 import {
   generateWithOpenRouter,
-  openRouterModel,
   OpenRouterError,
+  openRouterModel,
 } from "@/lib/generate/openrouter";
-import { chooseGenerationPath, inferProvider, type Provider, type ByokKey } from "@/lib/ledger/policy";
-import { ledgerEnabled, getBalance, debit, llmPrice } from "@/lib/ledger/client";
+import { debit, getBalance, ledgerEnabled, llmPrice } from "@/lib/ledger/client";
+import {
+  type ByokKey,
+  chooseGenerationPath,
+  inferProvider,
+  type Provider,
+} from "@/lib/ledger/policy";
+import { composeDeck, reviseDeck } from "@/lib/spec/compose";
+import { REVISE_PROMPT, revisionContent, SYSTEM_PROMPT } from "@/lib/spec/prompt";
+import { type DeckSpec, deckSchema, THEMES, type ThemeName } from "@/lib/spec/schema";
+import { type EditTarget, sanitizeTargets } from "@/lib/spec/target";
+import { validateDeck } from "@/lib/spec/validate";
 
 // The Anthropic SDK needs the Node runtime, not Edge.
 export const runtime = "nodejs";
@@ -89,7 +94,7 @@ export async function POST(req: NextRequest) {
   if (brief.length > MAX_BRIEF_CHARS) {
     return NextResponse.json(
       { error: `Brief too long (max ${MAX_BRIEF_CHARS} characters)` },
-      { status: 413 }
+      { status: 413 },
     );
   }
 
@@ -98,10 +103,7 @@ export async function POST(req: NextRequest) {
   if (body.currentDeck !== undefined) {
     const parsed = deckSchema.safeParse(body.currentDeck);
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: "currentDeck is not a valid deck spec" },
-        { status: 422 }
-      );
+      return NextResponse.json({ error: "currentDeck is not a valid deck spec" }, { status: 422 });
     }
     currentDeck = parsed.data;
   }
@@ -148,7 +150,7 @@ export async function POST(req: NextRequest) {
         code: "out_of_free_usage",
         balance: choice.balance,
       },
-      { status: 402 }
+      { status: 402 },
     );
   }
 
@@ -183,7 +185,7 @@ export async function POST(req: NextRequest) {
         }
         return NextResponse.json(
           { error: `Generation failed: ${e instanceof Error ? e.message : String(e)}` },
-          { status: 502 }
+          { status: 502 },
         );
       }
     }
@@ -214,13 +216,16 @@ export async function POST(req: NextRequest) {
     } else {
       // Network/5xx: the debit was lost. Don't show a misleading balance — the
       // deck is already produced, so we never fail the user here, just log it.
-      console.warn(
-        `[generate] debit failed (status ${res.status}) — generation not metered`
-      );
+      console.warn(`[generate] debit failed (status ${res.status}) — generation not metered`);
     }
   }
 
-  return NextResponse.json({ deck, source, model, ...(remaining !== null ? { balance: remaining } : {}) });
+  return NextResponse.json({
+    deck,
+    source,
+    model,
+    ...(remaining !== null ? { balance: remaining } : {}),
+  });
 }
 
 async function generateWithClaude(
@@ -229,7 +234,7 @@ async function generateWithClaude(
   currentDeck: DeckSpec | null,
   target: EditTarget[] | null,
   /** BYOK override; falls back to the company ANTHROPIC_API_KEY when absent. */
-  apiKey?: string
+  apiKey?: string,
 ): Promise<unknown> {
   // Imported lazily so the route still loads when the SDK isn't configured.
   const { default: Anthropic } = await import("@anthropic-ai/sdk");

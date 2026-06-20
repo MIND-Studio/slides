@@ -1,16 +1,16 @@
 "use client";
 
 import {
-  getSolidDatasetWithAcl,
-  hasResourceAcl,
-  hasAccessibleAcl,
-  hasFallbackAcl,
-  getResourceAcl,
   createAcl,
   createAclFromFallbackAcl,
-  setPublicResourceAccess,
-  setPublicDefaultAccess,
+  getResourceAcl,
+  getSolidDatasetWithAcl,
+  hasAccessibleAcl,
+  hasFallbackAcl,
+  hasResourceAcl,
   saveAclFor,
+  setPublicDefaultAccess,
+  setPublicResourceAccess,
 } from "@inrupt/solid-client";
 import { fetcher } from "./fetcher";
 
@@ -24,15 +24,12 @@ import { fetcher } from "./fetcher";
  *                        read. Without this the listing is public but the SPA's
  *                        own assets 403 and the page is blank.
  */
-async function setContainerPublicRead(
-  containerUrl: string,
-  read: boolean
-): Promise<void> {
+async function setContainerPublicRead(containerUrl: string, read: boolean): Promise<void> {
   const f = fetcher();
   const ds = await getSolidDatasetWithAcl(containerUrl, { fetch: f });
   if (!hasAccessibleAcl(ds)) {
     throw new Error(
-      "No control access to set the site's sharing — your pod may not allow WAC here."
+      "No control access to set the site's sharing — your pod may not allow WAC here.",
     );
   }
   let acl = hasResourceAcl(ds)

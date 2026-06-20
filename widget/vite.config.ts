@@ -1,6 +1,6 @@
 import { fileURLToPath } from "node:url";
-import { defineConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
+import { defineConfig } from "vite";
 
 // Builds the deck widget — DeckRenderer + the real slidev/layouts/*.vue —
 // into a single self-contained IIFE bundle that attaches `window.MindDeck`,

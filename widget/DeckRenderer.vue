@@ -21,7 +21,7 @@ import {
   watch,
   watchEffect,
 } from "vue";
-import { LAYOUTS, type BlockName } from "./layouts";
+import { type BlockName, LAYOUTS } from "./layouts";
 
 interface Target {
   slide: number;
@@ -35,9 +35,10 @@ interface DeckState {
 }
 
 const props = defineProps<{ state: DeckState }>();
-const emit = defineEmits<{
-  (e: "select", payload: { slide: number; field: string | null; meta: boolean }): void;
-}>();
+const emit =
+  defineEmits<
+    (e: "select", payload: { slide: number; field: string | null; meta: boolean }) => void
+  >();
 
 // Slidev's default canvas (canvasWidth 980, aspectRatio 16/9). The layouts' rem
 // sizing is tuned for this exact canvas at the document's 16px root — we scale
@@ -48,10 +49,10 @@ const CANVAS_H = 551.25;
 const frontmatter = inject<{ data: Record<string, unknown> }>("mind:frontmatter")!;
 
 const slide = computed(
-  () => props.state.deck?.slides?.[(props.state.activeSlide ?? 1) - 1] ?? null
+  () => props.state.deck?.slides?.[(props.state.activeSlide ?? 1) - 1] ?? null,
 );
 const layout = computed(() =>
-  slide.value ? LAYOUTS[slide.value.block as BlockName] ?? null : null
+  slide.value ? (LAYOUTS[slide.value.block as BlockName] ?? null) : null,
 );
 const paletteClass = computed(() => `palette-${props.state.deck?.theme ?? "mind"}`);
 
@@ -96,9 +97,7 @@ const canvasStyle = computed(() => ({
 // ---- click-to-select (studio editing bridge, now in-process) --------------
 function onClick(e: MouseEvent) {
   if (!props.state.embedded) return;
-  const fieldEl = (e.target as HTMLElement).closest?.(
-    "[data-s-field]"
-  ) as HTMLElement | null;
+  const fieldEl = (e.target as HTMLElement).closest?.("[data-s-field]") as HTMLElement | null;
   emit("select", {
     slide: props.state.activeSlide,
     field: fieldEl?.dataset.sField ?? null,
@@ -125,7 +124,7 @@ function applyHighlights() {
 watch(
   () => [props.state.targets, props.state.activeSlide, slide.value] as const,
   () => nextTick(applyHighlights),
-  { deep: true }
+  { deep: true },
 );
 onMounted(() => nextTick(applyHighlights));
 </script>

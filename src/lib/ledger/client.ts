@@ -67,11 +67,7 @@ export type DebitResult =
  * generation has already happened, so the route logs and returns the deck
  * anyway rather than failing the user after the fact.
  */
-export async function debit(
-  webid: string,
-  amount: number,
-  memo: string
-): Promise<DebitResult> {
+export async function debit(webid: string, amount: number, memo: string): Promise<DebitResult> {
   const cfg = ledgerConfig();
   if (!cfg) return { ok: false, status: 0, balance: null };
   try {

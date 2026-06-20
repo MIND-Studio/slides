@@ -1,7 +1,7 @@
 "use client";
 
-import { session } from "@/lib/solid/session";
 import { inferProvider } from "@/lib/ledger/policy";
+import { session } from "@/lib/solid/session";
 
 /**
  * Client helpers for the free-allotment flow: who the caller is (WebID, for

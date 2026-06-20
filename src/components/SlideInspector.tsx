@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@mind-studio/ui";
 import { Check, ListTree, Sparkles, Square, SquareCheck, Trash2, Undo2 } from "lucide-react";
-import { deckSchema, type DeckSpec, type Slide } from "@/lib/spec/schema";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { type DeckSpec, deckSchema, type Slide } from "@/lib/spec/schema";
 import { navTitleOf } from "@/lib/spec/serialize";
 import { BLOCK_FIELDS, type EditTarget, type FieldDef } from "@/lib/spec/target";
 
@@ -110,7 +110,7 @@ export default function SlideInspector({
                             targets.length === 1 &&
                             (previewSlide === null || previewSlide === n)
                             ? null
-                            : { slide: n }
+                            : { slide: n },
                         )
                   }
                   data-testid={`slide-item-${n}`}
@@ -187,7 +187,10 @@ function fromDraft(slide: Slide, draft: Draft): Slide {
       const col = v as { heading: string; points: string };
       next[def.key] = {
         heading: col.heading.trim(),
-        points: col.points.split("\n").map((l) => l.trim()).filter(Boolean),
+        points: col.points
+          .split("\n")
+          .map((l) => l.trim())
+          .filter(Boolean),
       };
     } else {
       // timeline lines: "date — label" (also accepts : or |).
@@ -230,7 +233,7 @@ function SlideEditor({
 
   const dirty = useMemo(
     () => JSON.stringify(draft) !== JSON.stringify(toDraft(slide)),
-    [draft, slide]
+    [draft, slide],
   );
 
   async function apply(slides: Slide[]) {

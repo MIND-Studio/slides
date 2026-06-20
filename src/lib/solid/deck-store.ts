@@ -1,16 +1,16 @@
 "use client";
 
 import {
-  overwriteFile,
-  getSolidDataset,
-  getContainedResourceUrlAll,
   deleteContainer,
   deleteFile,
+  getContainedResourceUrlAll,
+  getSolidDataset,
+  overwriteFile,
 } from "@inrupt/solid-client";
-import { fetcher } from "./fetcher";
-import { decksContainerFor, deckId } from "@/lib/config";
-import { deckSchema, type DeckSpec } from "@/lib/spec/schema";
+import { deckId, decksContainerFor } from "@/lib/config";
+import { type DeckSpec, deckSchema } from "@/lib/spec/schema";
 import { serializeDeck } from "@/lib/spec/serialize";
+import { fetcher } from "./fetcher";
 
 /**
  * Pod storage for decks. The BROWSER talks directly to the pod — no Mind
@@ -40,7 +40,7 @@ export async function saveDeck(
   podRoot: string,
   deck: DeckSpec,
   isoNow: string,
-  existingId?: string
+  existingId?: string,
 ): Promise<DeckMeta> {
   const container = decksContainerFor(podRoot);
   const id = existingId ?? deckId(deck.title, isoNow.replace(/[^0-9]/g, "").slice(8, 14));
@@ -70,9 +70,7 @@ export async function listDecks(podRoot: string): Promise<DeckMeta[]> {
   } catch {
     return []; // container doesn't exist yet → no decks
   }
-  const childContainers = getContainedResourceUrlAll(dataset).filter((u) =>
-    u.endsWith("/")
-  );
+  const childContainers = getContainedResourceUrlAll(dataset).filter((u) => u.endsWith("/"));
 
   const metas = await Promise.all(
     childContainers.map(async (c) => {
@@ -83,17 +81,14 @@ export async function listDecks(podRoot: string): Promise<DeckMeta[]> {
       } catch {
         return null;
       }
-    })
+    }),
   );
   return metas
     .filter((m): m is DeckMeta => m !== null)
     .sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1));
 }
 
-export async function loadDeck(
-  podRoot: string,
-  id: string
-): Promise<DeckSpec | null> {
+export async function loadDeck(podRoot: string, id: string): Promise<DeckSpec | null> {
   const url = `${decksContainerFor(podRoot)}${id}/deck.json`;
   try {
     const res = await fetcher()(url);
@@ -132,11 +127,7 @@ export async function removeDeck(podRoot: string, id: string): Promise<void> {
 }
 
 /** Store the exported PDF alongside the deck at `decks/<id>/deck.pdf`. */
-export async function savePdf(
-  podRoot: string,
-  id: string,
-  pdf: Blob
-): Promise<string> {
+export async function savePdf(podRoot: string, id: string, pdf: Blob): Promise<string> {
   const url = `${decksContainerFor(podRoot)}${id}/deck.pdf`;
   await overwriteFile(url, pdf, { contentType: "application/pdf", fetch: fetcher() });
   return url;

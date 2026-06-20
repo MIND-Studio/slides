@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { Button } from "@mind-studio/ui";
+import Link from "next/link";
 
 export default function Landing() {
   return (
@@ -11,14 +11,11 @@ export default function Landing() {
         Describe a deck. Watch it render.
       </h1>
       <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-        Mind Slides turns a brief into a polished presentation by filling a{" "}
-        <em>controlled set</em> of slide blocks — hero, big-number, comparison,
-        quote, timeline, cinematic section breaks. The agent never writes CSS or
-        layout; it only chooses and fills blocks, which a serializer renders with{" "}
-        <a
-          className="text-primary underline-offset-4 hover:underline"
-          href="https://sli.dev"
-        >
+        Mind Slides turns a brief into a polished presentation by filling a <em>controlled set</em>{" "}
+        of slide blocks — hero, big-number, comparison, quote, timeline, cinematic section breaks.
+        The agent never writes CSS or layout; it only chooses and fills blocks, which a serializer
+        renders with{" "}
+        <a className="text-primary underline-offset-4 hover:underline" href="https://sli.dev">
           Slidev
         </a>
         . The result is reliably beautiful — and yours: decks live in your pod.
@@ -48,9 +45,9 @@ export default function Landing() {
       </section>
 
       <p className="mt-16 rounded-lg border bg-muted/40 px-5 py-4 font-mono text-xs leading-relaxed text-muted-foreground">
-        Privacy invariant: your browser talks directly to your pod. The brief
-        you type is sent to the generation model (this is the authoring tool),
-        but your saved decks never touch a Mind server.
+        Privacy invariant: your browser talks directly to your pod. The brief you type is sent to
+        the generation model (this is the authoring tool), but your saved decks never touch a Mind
+        server.
       </p>
     </section>
   );
@@ -60,9 +57,7 @@ function Feature({ title, body }: { title: string; body: string }) {
   return (
     <div>
       <p className="text-lg font-semibold tracking-tight">{title}</p>
-      <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-        {body}
-      </p>
+      <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{body}</p>
     </div>
   );
 }

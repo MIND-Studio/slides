@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { deckSchema, type DeckSpec, type ThemeName } from "@/lib/spec/schema";
-import { SYSTEM_PROMPT, REVISE_PROMPT, revisionContent } from "@/lib/spec/prompt";
+import { REVISE_PROMPT, revisionContent, SYSTEM_PROMPT } from "@/lib/spec/prompt";
+import { type DeckSpec, deckSchema, type ThemeName } from "@/lib/spec/schema";
 import type { EditTarget } from "@/lib/spec/target";
 
 /**
@@ -13,8 +13,7 @@ import type { EditTarget } from "@/lib/spec/target";
  */
 
 // Overridable for self-hosted gateways/proxies (and for testing).
-const OPENROUTER_BASE_URL =
-  process.env.OPENROUTER_BASE_URL ?? "https://openrouter.ai/api/v1";
+const OPENROUTER_BASE_URL = process.env.OPENROUTER_BASE_URL ?? "https://openrouter.ai/api/v1";
 const OPENROUTER_URL = `${OPENROUTER_BASE_URL.replace(/\/$/, "")}/chat/completions`;
 
 /** Override with OPENROUTER_MODEL — any OpenRouter slug works. */
@@ -24,7 +23,7 @@ export class OpenRouterError extends Error {
   constructor(
     message: string,
     /** Status to proxy back to the studio. */
-    readonly status: number
+    readonly status: number,
   ) {
     super(message);
     this.name = "OpenRouterError";
@@ -41,7 +40,7 @@ export async function generateWithOpenRouter(
   currentDeck: DeckSpec | null,
   target: EditTarget | EditTarget[] | null = null,
   /** BYOK override; falls back to the company OPENROUTER_API_KEY when absent. */
-  apiKey?: string
+  apiKey?: string,
 ): Promise<unknown> {
   const system = currentDeck ? `${SYSTEM_PROMPT}\n\n${REVISE_PROMPT}` : SYSTEM_PROMPT;
   const content = currentDeck
@@ -92,7 +91,7 @@ export async function generateWithOpenRouter(
   } catch {
     throw new OpenRouterError(
       "OpenRouter returned non-JSON output — the selected model may not support structured outputs (set OPENROUTER_MODEL to one that does).",
-      502
+      502,
     );
   }
 }

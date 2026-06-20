@@ -19,12 +19,12 @@
 // Run locally: `npm run worker` (uses Playwright's bundled Chromium).
 // In Docker (alpine): set CHROMIUM_PATH=/usr/bin/chromium-browser.
 
-import { createServer } from "node:http";
 import { execFile } from "node:child_process";
-import { fileURLToPath } from "node:url";
-import path from "node:path";
-import os from "node:os";
 import fs from "node:fs/promises";
+import { createServer } from "node:http";
+import os from "node:os";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const REPO = path.resolve(HERE, "..");
@@ -109,7 +109,7 @@ function runSlidev(args, cwd) {
           err.message = `slidev ${args[0]} failed: ${err.message}\n${stderr || stdout}`;
           reject(err);
         } else resolve({ stdout, stderr });
-      }
+      },
     );
     child.on("error", reject);
   });
@@ -161,7 +161,7 @@ async function doBuild(slidesMd, base) {
         path: rel,
         base64: (await fs.readFile(path.join(outDir, rel))).toString("base64"),
         contentType: contentTypeFor(rel),
-      }))
+      })),
     );
     return { files };
   } finally {

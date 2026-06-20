@@ -1,4 +1,4 @@
-import { THEMES, type DeckSpec, type Slide, type ThemeName } from "./schema";
+import { type DeckSpec, type Slide, THEMES, type ThemeName } from "./schema";
 import { BLOCK_FIELDS, type EditTarget } from "./target";
 
 /**
@@ -67,8 +67,7 @@ function findNumber(brief: string): Figure | null {
   const chosen =
     withUnit ??
     matches.sort(
-      (a, b) =>
-        Number(b.text.replace(/[^\d.]/g, "")) - Number(a.text.replace(/[^\d.]/g, ""))
+      (a, b) => Number(b.text.replace(/[^\d.]/g, "")) - Number(a.text.replace(/[^\d.]/g, "")),
     )[0];
 
   // Grab up to three trailing words as a label ("50000 active users" → "active users").
@@ -82,14 +81,11 @@ function deriveTitle(brief: string): string {
   // "a pitch for Helix, a privacy-first..." → "Helix". Pull the subject after
   // a pitch/deck/presentation cue when there is one.
   const subject = brief.match(
-    /\b(?:pitch|deck|presentation|talk|slides?)\s+(?:for|about|on|introducing)\s+([A-Z][\w&-]*(?:\s+[A-Z][\w&-]*)?)/
+    /\b(?:pitch|deck|presentation|talk|slides?)\s+(?:for|about|on|introducing)\s+([A-Z][\w&-]*(?:\s+[A-Z][\w&-]*)?)/,
   );
   if (subject) return subject[1].trim();
 
-  const s = firstSentence(brief).replace(
-    /^(make|build|create|design|a|an|the)\s+/i,
-    ""
-  );
+  const s = firstSentence(brief).replace(/^(make|build|create|design|a|an|the)\s+/i, "");
   const trimmed = s.length > 56 ? s.slice(0, 53).trimEnd() + "…" : s;
   return titleCase(trimmed) || "New deck";
 }
@@ -198,14 +194,15 @@ function reviseTargeted(deck: DeckSpec, instruction: string, target: EditTarget)
       next[def.key] = quoted.trim();
     } else if (/\b(shorter|shorten|tighten|punchier|punchy|crisper)\b/.test(lower) && current) {
       const clause = current.split(/[,—–:;]/)[0].trim();
-      next[def.key] = (clause.length >= 3 ? clause : current.split(/\s+/).slice(0, 6).join(" "))
-        .replace(/[\s.]+$/, "");
+      next[def.key] = (
+        clause.length >= 3 ? clause : current.split(/\s+/).slice(0, 6).join(" ")
+      ).replace(/[\s.]+$/, "");
     } else if (/\b(remove|delete|drop|clear)\b/.test(lower) && def.optional) {
       delete next[def.key];
     } else {
       const mined = firstSentence(instruction).replace(
         /^(change|make|set|update|rewrite|say|use)\b[^:]*?(?:to|:)?\s*/i,
-        ""
+        "",
       );
       next[def.key] = (mined || instruction).trim().slice(0, 110);
     }
@@ -213,7 +210,10 @@ function reviseTargeted(deck: DeckSpec, instruction: string, target: EditTarget)
     const current = Array.isArray(record[def.key]) ? (record[def.key] as string[]) : [];
     const mined = quoted ? [quoted.trim()] : extractPoints(instruction);
     if (/\b(add|insert|include|append)\b/.test(lower)) {
-      next[def.key] = [...current, ...(mined.length ? mined.slice(0, 3) : [instruction.trim().slice(0, 80)])];
+      next[def.key] = [
+        ...current,
+        ...(mined.length ? mined.slice(0, 3) : [instruction.trim().slice(0, 80)]),
+      ];
     } else {
       next[def.key] = mined.length >= 2 ? mined.slice(0, 6) : [...current, ...mined];
     }
@@ -255,12 +255,12 @@ function reviseTargeted(deck: DeckSpec, instruction: string, target: EditTarget)
 export function reviseDeck(
   deck: DeckSpec,
   instruction: string,
-  target?: EditTarget | EditTarget[] | null
+  target?: EditTarget | EditTarget[] | null,
 ): DeckSpec {
   // Multi-select: fold the targeted reviser over each selection, highest
   // slide first so a "remove" doesn't shift the indexes still to be visited.
   const targets = (Array.isArray(target) ? target : target ? [target] : []).filter(
-    (t) => t.slide >= 1 && t.slide <= deck.slides.length
+    (t) => t.slide >= 1 && t.slide <= deck.slides.length,
   );
   if (targets.length > 0) {
     return [...targets]
@@ -279,7 +279,7 @@ export function reviseDeck(
 
   // Retitle: rename/retitle the deck to "X" / call it X.
   const retitle = instruction.match(
-    /\b(?:rename|retitle|call)\s+(?:it|the deck|this)?\s*(?:to|as)?\s*["“']?([^"”'\n.]{2,60})["”']?/i
+    /\b(?:rename|retitle|call)\s+(?:it|the deck|this)?\s*(?:to|as)?\s*["“']?([^"”'\n.]{2,60})["”']?/i,
   );
   if (retitle) title = retitle[1].trim();
 

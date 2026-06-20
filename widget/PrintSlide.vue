@@ -9,7 +9,7 @@
  * mount; this component only picks the layout and supplies the content slot.
  */
 import { computed } from "vue";
-import { LAYOUTS, type BlockName } from "./layouts";
+import { type BlockName, LAYOUTS } from "./layouts";
 
 const props = defineProps<{ slide: Record<string, unknown> }>();
 const layout = computed(() => LAYOUTS[props.slide.block as BlockName] ?? null);

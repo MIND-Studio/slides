@@ -35,10 +35,7 @@ export async function exportPdf(slidesMd: string): Promise<Blob> {
  * `slidev build` → static SPA. `base` is the pod URL path the site is served
  * from (see siteBaseForId) so asset URLs resolve. Returns the dist file list.
  */
-export async function buildSite(
-  slidesMd: string,
-  base: string
-): Promise<SiteFile[]> {
+export async function buildSite(slidesMd: string, base: string): Promise<SiteFile[]> {
   const res = await fetch("/api/render", {
     method: "POST",
     headers: { "content-type": "application/json" },
