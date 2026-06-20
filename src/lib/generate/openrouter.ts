@@ -39,7 +39,9 @@ export async function generateWithOpenRouter(
   brief: string,
   theme: ThemeName,
   currentDeck: DeckSpec | null,
-  target: EditTarget | EditTarget[] | null = null
+  target: EditTarget | EditTarget[] | null = null,
+  /** BYOK override; falls back to the company OPENROUTER_API_KEY when absent. */
+  apiKey?: string
 ): Promise<unknown> {
   const system = currentDeck ? `${SYSTEM_PROMPT}\n\n${REVISE_PROMPT}` : SYSTEM_PROMPT;
   const content = currentDeck
@@ -49,7 +51,7 @@ export async function generateWithOpenRouter(
   const res = await fetch(OPENROUTER_URL, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+      Authorization: `Bearer ${apiKey ?? process.env.OPENROUTER_API_KEY}`,
       "content-type": "application/json",
       // Optional attribution headers OpenRouter recommends.
       "HTTP-Referer": "https://mindpods.org",

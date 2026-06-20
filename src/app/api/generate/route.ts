@@ -9,6 +9,8 @@ import {
   openRouterModel,
   OpenRouterError,
 } from "@/lib/generate/openrouter";
+import { chooseGenerationPath, inferProvider, type Provider, type ByokKey } from "@/lib/ledger/policy";
+import { ledgerEnabled, getBalance, debit, llmPrice } from "@/lib/ledger/client";
 
 // The Anthropic SDK needs the Node runtime, not Edge.
 export const runtime = "nodejs";
@@ -20,9 +22,17 @@ function pickTheme(input: unknown): ThemeName {
   return THEMES.includes(input as ThemeName) ? (input as ThemeName) : "mind";
 }
 
-type Provider = "anthropic" | "openrouter";
-
 const ANTHROPIC_MODEL = "claude-opus-4-8";
+
+/** Read an optional user-supplied key from the request headers. */
+function readByok(req: NextRequest): ByokKey | null {
+  const apiKey = req.headers.get("x-mind-llm-key")?.trim();
+  if (!apiKey) return null;
+  const hinted = req.headers.get("x-mind-llm-provider")?.trim();
+  const provider: Provider =
+    hinted === "anthropic" || hinted === "openrouter" ? hinted : inferProvider(apiKey);
+  return { provider, apiKey };
+}
 
 /**
  * Which backend serves this request. GENERATION_PROVIDER pins one explicitly;
@@ -109,41 +119,74 @@ export async function POST(req: NextRequest) {
   // theme is the default and only the instruction may change it.
   const theme = currentDeck ? currentDeck.theme : pickTheme(body.theme);
 
-  const provider = pickProvider();
-  if (provider && typeof provider === "object") {
-    return NextResponse.json({ error: provider.error }, { status: 500 });
+  const company = pickProvider();
+  if (company && typeof company === "object") {
+    return NextResponse.json({ error: company.error }, { status: 500 });
+  }
+
+  // Free-allotment routing: BYOK > metered company key > offline. A logged-in
+  // caller is identified by `x-mind-webid`; while they have MIND we run on the
+  // company key and debit, and when it's spent we ask them to add a key.
+  const webid = req.headers.get("x-mind-webid")?.trim() || null;
+  const byok = readByok(req);
+  const ledgerOn = ledgerEnabled();
+  const balance = ledgerOn && webid && !byok ? await getBalance(webid) : null;
+
+  const choice = chooseGenerationPath({
+    ledgerEnabled: ledgerOn,
+    webid,
+    byok,
+    companyProvider: company ?? null,
+    balance,
+  });
+
+  if (choice.kind === "out_of_free") {
+    return NextResponse.json(
+      {
+        error:
+          "You've used your free AI allotment. Add your own API key in settings to keep generating.",
+        code: "out_of_free_usage",
+        balance: choice.balance,
+      },
+      { status: 402 }
+    );
   }
 
   let rawDeck: unknown;
   let source: "model" | "local";
   let model: string | null = null;
 
-  if (provider === "anthropic") {
-    try {
-      rawDeck = await generateWithClaude(brief, theme, currentDeck, target);
-      source = "model";
-      model = ANTHROPIC_MODEL;
-    } catch (e) {
-      const { message, status } = await describeAnthropicError(e);
-      return NextResponse.json({ error: message }, { status });
-    }
-  } else if (provider === "openrouter") {
-    try {
-      rawDeck = await generateWithOpenRouter(brief, theme, currentDeck, target);
-      source = "model";
-      model = openRouterModel();
-    } catch (e) {
-      if (e instanceof OpenRouterError) {
-        return NextResponse.json({ error: e.message }, { status: e.status });
-      }
-      return NextResponse.json(
-        { error: `Generation failed: ${e instanceof Error ? e.message : String(e)}` },
-        { status: 502 }
-      );
-    }
-  } else {
+  if (choice.kind === "offline") {
     rawDeck = currentDeck ? reviseDeck(currentDeck, brief, target) : composeDeck(brief, theme);
     source = "local";
+  } else {
+    // BYOK uses the caller's key; the company path passes no key (env default).
+    const apiKey = choice.kind === "byok" ? choice.apiKey : undefined;
+    const provider: Provider = choice.kind === "byok" ? choice.provider : (company as Provider);
+    if (provider === "anthropic") {
+      try {
+        rawDeck = await generateWithClaude(brief, theme, currentDeck, target, apiKey);
+        source = "model";
+        model = ANTHROPIC_MODEL;
+      } catch (e) {
+        const { message, status } = await describeAnthropicError(e);
+        return NextResponse.json({ error: message }, { status });
+      }
+    } else {
+      try {
+        rawDeck = await generateWithOpenRouter(brief, theme, currentDeck, target, apiKey);
+        source = "model";
+        model = openRouterModel();
+      } catch (e) {
+        if (e instanceof OpenRouterError) {
+          return NextResponse.json({ error: e.message }, { status: e.status });
+        }
+        return NextResponse.json(
+          { error: `Generation failed: ${e instanceof Error ? e.message : String(e)}` },
+          { status: 502 }
+        );
+      }
+    }
   }
 
   const result = validateDeck(rawDeck);
@@ -156,20 +199,32 @@ export async function POST(req: NextRequest) {
   // legitimately switch themes).
   const deck = currentDeck ? result.deck : { ...result.deck, theme };
 
-  return NextResponse.json({ deck, source, model });
+  // Meter a successful company-key run against the caller's free allotment. The
+  // deck is already produced, so a failed/late debit never fails the user — we
+  // just report whatever balance we can (0 if it raced to empty).
+  let remaining: number | null = null;
+  if (choice.kind === "company" && choice.meter && webid) {
+    const memo = `slides:${currentDeck ? "revise" : "generate"}`;
+    const res = await debit(webid, llmPrice(), memo);
+    remaining = res.ok ? res.balance : (res.balance ?? 0);
+  }
+
+  return NextResponse.json({ deck, source, model, ...(remaining !== null ? { balance: remaining } : {}) });
 }
 
 async function generateWithClaude(
   brief: string,
   theme: ThemeName,
   currentDeck: DeckSpec | null,
-  target: EditTarget[] | null
+  target: EditTarget[] | null,
+  /** BYOK override; falls back to the company ANTHROPIC_API_KEY when absent. */
+  apiKey?: string
 ): Promise<unknown> {
   // Imported lazily so the route still loads when the SDK isn't configured.
   const { default: Anthropic } = await import("@anthropic-ai/sdk");
   const { zodOutputFormat } = await import("@anthropic-ai/sdk/helpers/zod");
 
-  const client = new Anthropic();
+  const client = new Anthropic(apiKey ? { apiKey } : undefined);
   const system = currentDeck ? `${SYSTEM_PROMPT}\n\n${REVISE_PROMPT}` : SYSTEM_PROMPT;
   const content = currentDeck
     ? revisionContent(currentDeck, brief, target)
