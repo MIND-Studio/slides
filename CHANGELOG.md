@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/MIND-Studio/slides/compare/v0.2.1...v0.3.0) (2026-06-20)
+
+
+### Features
+
+* **generate:** free MIND allotment metering + BYOK fallback ([#5](https://github.com/MIND-Studio/slides/issues/5)) ([ffa2ce1](https://github.com/MIND-Studio/slides/commit/ffa2ce1abfd31a5369773bdaac01207332207c2a))
+
 ## [0.2.1](https://github.com/MIND-Studio/slides/compare/v0.2.0...v0.2.1) (2026-06-14)
 
 
