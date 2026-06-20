@@ -13,9 +13,6 @@ import { DEFAULT_ISSUER, session, rememberIssuer } from "@/lib/solid/session";
 import { ensureSession, rememberReturnToDefault } from "@/lib/solid/auth";
 
 const APP_NAME = "Slides";
-// Amber accent on the login card to signal a creative/authoring tool. The app
-// UI itself stays on the default Mind brand via @mind-studio/ui tokens.
-const MIND_ACCENT = "#f59e0b";
 
 export default function ConnectForm() {
   const [webId, setWebId] = useState<string | null>(null);
@@ -73,7 +70,6 @@ export default function ConnectForm() {
       <MindLoginCard
         appName={APP_NAME}
         defaultIssuer={DEFAULT_ISSUER}
-        accent={MIND_ACCENT}
         onLogin={async ({ issuer }) => {
           rememberIssuer(issuer);
           rememberReturnToDefault("/studio");
