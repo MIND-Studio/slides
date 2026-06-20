@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/MIND-Studio/slides/compare/v0.3.0...v0.4.0) (2026-06-20)
+
+
+### Features
+
+* adopt ui ^0.4.0 fonts + core ^0.7.0 login accent ([#7](https://github.com/MIND-Studio/slides/issues/7)) ([de9cfee](https://github.com/MIND-Studio/slides/commit/de9cfeec27343d84ec4057a2bf88dd0b7281fe2f))
+
 ## [0.3.0](https://github.com/MIND-Studio/slides/compare/v0.2.1...v0.3.0) (2026-06-20)
 
 
