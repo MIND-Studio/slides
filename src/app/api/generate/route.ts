@@ -206,7 +206,18 @@ export async function POST(req: NextRequest) {
   if (choice.kind === "company" && choice.meter && webid) {
     const memo = `slides:${currentDeck ? "revise" : "generate"}`;
     const res = await debit(webid, llmPrice(), memo);
-    remaining = res.ok ? res.balance : (res.balance ?? 0);
+    if (res.ok) {
+      remaining = res.balance;
+    } else if (res.status === 402) {
+      // Raced to empty between the check and the debit — genuinely spent.
+      remaining = res.balance ?? 0;
+    } else {
+      // Network/5xx: the debit was lost. Don't show a misleading balance — the
+      // deck is already produced, so we never fail the user here, just log it.
+      console.warn(
+        `[generate] debit failed (status ${res.status}) — generation not metered`
+      );
+    }
   }
 
   return NextResponse.json({ deck, source, model, ...(remaining !== null ? { balance: remaining } : {}) });

@@ -1,6 +1,7 @@
 "use client";
 
 import { session } from "@/lib/solid/session";
+import { inferProvider } from "@/lib/ledger/policy";
 
 /**
  * Client helpers for the free-allotment flow: who the caller is (WebID, for
@@ -14,10 +15,12 @@ const PROVIDER_STORAGE = "mind.slides.byok.provider";
 
 export type Provider = "anthropic" | "openrouter";
 
-/** Best-effort provider guess for a pasted key (mirrors the server's). */
-export function inferProviderFromKey(apiKey: string): Provider {
-  return apiKey.startsWith("sk-ant-") ? "anthropic" : "openrouter";
-}
+/**
+ * Best-effort provider guess for a pasted key. Re-exported from the shared
+ * policy module so the client and the server's `/api/generate` infer providers
+ * identically (one source of truth — no drift).
+ */
+export const inferProviderFromKey = inferProvider;
 
 /** The logged-in caller's WebID, or null when anonymous. */
 export function callerWebId(): string | null {
