@@ -1,4 +1,4 @@
-import { Button, ThemeProvider, Toaster } from "@mind-studio/ui";
+import { Button, Logo, ThemeProvider, Toaster } from "@mind-studio/ui";
 import { mind } from "@mind-studio/ui/themes";
 import type { Metadata } from "next";
 import { Fraunces, Hanken_Grotesk, JetBrains_Mono } from "next/font/google";
@@ -59,10 +59,8 @@ function Masthead() {
   return (
     <header className="border-b bg-card">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:gap-8 sm:px-10 sm:py-4">
-        <Link href="/" className="flex items-baseline gap-3">
-          <span className="whitespace-nowrap text-xl font-semibold tracking-tight sm:text-2xl">
-            Mind Slides
-          </span>
+        <Link href="/" className="flex items-center gap-3">
+          <Logo label="Slides" />
           <span className="hidden font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground sm:inline">
             <span className="text-primary">●</span> decks, generated
           </span>
