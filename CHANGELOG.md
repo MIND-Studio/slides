@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://github.com/MIND-Studio/slides/compare/v0.4.0...v0.5.0) (2026-06-21)
+
+
+### Features
+
+* adopt brand lockup + canonical icons (ui[#29](https://github.com/MIND-Studio/slides/issues/29) wave 2) ([#12](https://github.com/MIND-Studio/slides/issues/12)) ([62ac247](https://github.com/MIND-Studio/slides/commit/62ac247e31cd063c7d349d5e63d72cde4b982f25))
+
 ## [0.4.0](https://github.com/MIND-Studio/slides/compare/v0.3.0...v0.4.0) (2026-06-20)
 
 
