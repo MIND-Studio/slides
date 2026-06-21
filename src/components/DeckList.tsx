@@ -1,6 +1,16 @@
 "use client";
 
-import { Button } from "@mind-studio/ui";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  Button,
+} from "@mind-studio/ui";
 import {
   Check,
   ExternalLink,
@@ -58,6 +68,8 @@ export default function DeckList({
   const [progress, setProgress] = useState<string | null>(null);
   const [pdfSaved, setPdfSaved] = useState(false);
   const [published, setPublished] = useState<{ indexUrl: string; isPublic: boolean } | null>(null);
+  // Which deck the user has asked to delete — drives the confirm dialog.
+  const [deckPendingDelete, setDeckPendingDelete] = useState<DeckMeta | null>(null);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -177,9 +189,6 @@ export default function DeckList({
   }
 
   async function onDelete(meta: DeckMeta) {
-    if (!window.confirm(`Delete “${meta.title}” from your pod? This cannot be undone.`)) {
-      return;
-    }
     setWorking(meta.id);
     setError(null);
     try {
@@ -358,7 +367,7 @@ export default function DeckList({
               <Button
                 size="icon-sm"
                 variant="ghost"
-                onClick={() => onDelete(m)}
+                onClick={() => setDeckPendingDelete(m)}
                 disabled={working === m.id}
                 title="Delete"
               >
@@ -368,6 +377,35 @@ export default function DeckList({
           ))
         )}
       </div>
+
+      <AlertDialog
+        open={deckPendingDelete !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeckPendingDelete(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete deck?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Delete “{deckPendingDelete?.title}” from your pod? This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={() => {
+                const meta = deckPendingDelete;
+                setDeckPendingDelete(null);
+                if (meta) void onDelete(meta);
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

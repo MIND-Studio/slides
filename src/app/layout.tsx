@@ -1,4 +1,4 @@
-import { Button, ThemeProvider } from "@mind-studio/ui";
+import { Button, ThemeProvider, Toaster } from "@mind-studio/ui";
 import { mind } from "@mind-studio/ui/themes";
 import type { Metadata } from "next";
 import { Fraunces, Hanken_Grotesk, JetBrains_Mono } from "next/font/google";
@@ -48,6 +48,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             <Masthead />
           </StandaloneOnly>
           <main className="flex-1">{children}</main>
+          <Toaster position="bottom-right" />
         </ThemeProvider>
       </body>
     </html>
