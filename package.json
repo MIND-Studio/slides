@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev -p 3160",
+    "gen:icons": "node scripts/gen-icons.mjs",
     "predev": "npm run build:widget",
     "build": "next build",
     "prebuild": "npm run build:widget",
@@ -47,6 +48,7 @@
     "@types/react-dom": "^19",
     "@vitejs/plugin-vue": "^5.2.1",
     "playwright-chromium": "^1.60.0",
+    "sharp": "^0.34.5",
     "tailwindcss": "^4",
     "tsx": "^4.22.3",
     "typescript": "^5",
