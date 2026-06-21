@@ -11,6 +11,7 @@ import {
   MonitorPlay,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { exportPdf } from "@/lib/publish/render-client";
 import type { DeckSpec } from "@/lib/spec/schema";
 import { serializeDeck } from "@/lib/spec/serialize";
@@ -219,7 +220,7 @@ export default function DeckCanvas({
       const blob = await exportPdf(serializeDeck(deck));
       downloadBlob(blob, `${slugify()}.pdf`);
     } catch (e) {
-      alert(e instanceof Error ? e.message : String(e));
+      toast.error(e instanceof Error ? e.message : String(e));
     } finally {
       setExporting(false);
     }
